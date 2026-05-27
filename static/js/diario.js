@@ -208,9 +208,12 @@ document.addEventListener('keydown', function (e) {
     if (esAtajo(e, 'nuevoRenglon') &&
         (activeElement.classList.contains('input-debe') || activeElement.classList.contains('input-haber'))) {
         e.preventDefault();
-        agregarLinea();
-        const inputsCuenta = document.querySelectorAll('.input-cuenta');
-        inputsCuenta[inputsCuenta.length - 1].focus();
+        agregarLinea(activeElement);
+        const bloqueActivo = activeElement.closest('.bloque-asiento-dinamico');
+        const inputsCuenta = bloqueActivo
+            ? bloqueActivo.querySelectorAll('.input-cuenta')
+            : document.querySelectorAll('.input-cuenta');
+        if (inputsCuenta.length > 0) inputsCuenta[inputsCuenta.length - 1].focus();
         return;
     }
 
@@ -271,14 +274,17 @@ document.addEventListener('keydown', function (e) {
         return;
     }
 
-    // ATAJO: Ir a comprobante
+
+    // ATAJO: Ir a comprobante (del bloque activo)
     if (esAtajo(e, 'focoComprobante')) {
         e.preventDefault();
-        const inputComprobante = document.getElementById('input-comprobante');
-        if (inputComprobante) {
-            inputComprobante.focus();
-            inputComprobante.click();
-        }
+        const bloqueActivo = activeElement
+            ? (activeElement.closest('.bloque-asiento-dinamico') || document.querySelector('.bloque-asiento-dinamico'))
+            : document.querySelector('.bloque-asiento-dinamico');
+        const inputComprobante = bloqueActivo
+            ? bloqueActivo.querySelector('.input-comprobante')
+            : document.getElementById('input-comprobante');
+        if (inputComprobante) { inputComprobante.focus(); inputComprobante.click(); }
         return;
     }
 });
@@ -408,51 +414,43 @@ document.addEventListener('DOMContentLoaded', () => {
     // SETUP AUTOCOMPLETADO PERSONALIZADO
     // ============================================================================
 
-    // 1. Cargar Datos de Cuentas
-    const opcionesCuentas = [];
+
+    // 1. Exponer datos de cuentas globalmente (necesario para clonar bloques)
+    window._opcionesCuentas = [];
     document.querySelectorAll('#cuentas-list option').forEach(opt => {
-        opcionesCuentas.push({ texto: opt.value, valor: opt.value, id: opt.getAttribute('data-id') });
+        window._opcionesCuentas.push({ texto: opt.value, valor: opt.value, id: opt.getAttribute('data-id') });
     });
 
-    // 2. Cargar Datos de Comprobantes
-    const opcionesCompro = [];
+    // 2. Datos de comprobantes
+    window._opcionesCompro = [];
     document.querySelectorAll('#lista-comprobantes option').forEach(opt => {
-        opcionesCompro.push({ texto: opt.value, valor: opt.value });
+        window._opcionesCompro.push({ texto: opt.value, valor: opt.value });
     });
 
-    // 3. Aplicar a inputs existentes (El primero y el comprobante)
-    const primerCuenta = document.querySelector('.input-cuenta');
-    if (primerCuenta) setupAutocomplete(primerCuenta, opcionesCuentas);
+    // 3. Aplicar autocompletado a todos los inputs existentes en el DOM inicial
+    document.querySelectorAll('.bloque-input-container .input-cuenta').forEach(inp => {
+        if (window._opcionesCuentas.length) setupAutocomplete(inp, window._opcionesCuentas);
+    });
 
-    const inputCompro = document.getElementById('input-comprobante');
-    if (inputCompro) {
-        inputCompro.removeAttribute('list');  // 👈 Esta línea faltaba
-        setupAutocomplete(inputCompro, opcionesCompro);
-    }
+    document.querySelectorAll('.input-comprobante').forEach(inp => {
+        inp.removeAttribute('list');
+        if (window._opcionesCompro.length) setupAutocomplete(inp, window._opcionesCompro);
+    });
 
-    // 4. IMPORTANTE: Sobrescribir agregarLinea para que las nuevas filas tengan autocompletado
-    const oldAgregar = window.agregarLinea;
-    window.agregarLinea = function () {
-        // Llamar a la función original para que cree el HTML
-        const container = document.getElementById('input-container');
-        // Clonamos lógica manual porque necesitamos referencia al nuevo input
-        const newRow = container.children[0].cloneNode(true);
-        newRow.querySelectorAll('input').forEach(input => {
-            input.value = ''; input.readOnly = false;
-            input.style.backgroundColor = 'transparent';
-            input.style.textAlign = 'left'; input.style.fontStyle = 'normal'; input.style.color = '#333';
-
-        });
-        container.appendChild(newRow); // Agregado manual
-
-        // Aplicar magia al nuevo input
+    // 4. Override de agregarLinea: las filas nuevas heredan el autocompletado
+    const _agregarLineaBase = window.agregarLinea;
+    window.agregarLinea = function (contextEl) {
+        const newRow = _agregarLineaBase ? _agregarLineaBase(contextEl) : null;
+        if (!newRow) return newRow;
         const newInput = newRow.querySelector('.input-cuenta');
-        // Quitar el atributo list nativo para que no salga el negro feo
-        newInput.removeAttribute('list');
-        setupAutocomplete(newInput, opcionesCuentas);
-
+        if (newInput) {
+            newInput.removeAttribute('list');
+            if (window._opcionesCuentas && window._opcionesCuentas.length) {
+                setupAutocomplete(newInput, window._opcionesCuentas);
+            }
+        }
         return newRow;
-    }
+    };
 });
 
 // ============================================================================
@@ -574,39 +572,29 @@ function detectarVentaAutomatica(inputCuenta) {
 /* EN DIARIO.JS - Actualizar autocompletarVenta */
 
 function autocompletarVenta(roworigen, neto, iva) {
-    // 1. Llenar la fila original (Venta neta)
-    // Asumiendo que roworigen ya existe y es la fila donde escribiste "Ventas"
     const inputHaberOrigen = roworigen.querySelector('.input-haber');
     const inputDebeOrigen = roworigen.querySelector('.input-debe');
 
-    // Limpiamos el Debe por si acaso
     if (inputDebeOrigen) inputDebeOrigen.value = "";
-
-    // Ponemos el Neto en el Haber
     if (inputHaberOrigen) {
         inputHaberOrigen.value = neto.toFixed(2);
         if (typeof detectarLado === 'function') detectarLado(inputHaberOrigen);
     }
 
-    // 2. AGREGAR FILA DE IVA (Usando la nueva función robusta)
-    // Llamamos a agregarLinea para crear una fila BIEN FORMADA
-    agregarLinea();
+    // Agregar la fila de IVA dentro del mismo bloque
+    agregarLinea(roworigen);
 
-    // Buscamos la fila que acabamos de crear (la última)
-    const container = document.getElementById('input-container');
-    const filas = container.querySelectorAll('.fila-movimiento');
+    const container = roworigen.closest('.bloque-input-container');
+    const filas = container ? container.querySelectorAll('.fila-movimiento') : [];
     const filaIVA = filas[filas.length - 1];
 
     if (filaIVA) {
-        // Llenamos los datos del IVA
         const inpNombre = filaIVA.querySelector('.input-cuenta');
         const inpId = filaIVA.querySelector('.hidden-id-cuenta');
         const inpHaber = filaIVA.querySelector('.input-haber');
 
-        if (inpNombre) inpNombre.value = "IVA Ventas"; // O el nombre que uses
-        // IMPORTANTE: Aquí deberías poner el ID real del IVA si lo tienes a mano, si no '0'
+        if (inpNombre) inpNombre.value = "IVA Ventas";
         if (inpId) inpId.value = "0";
-
         if (inpHaber) {
             inpHaber.value = iva.toFixed(2);
             if (typeof detectarLado === 'function') detectarLado(inpHaber);
@@ -619,79 +607,100 @@ function autocompletarVenta(roworigen, neto, iva) {
 
 /* EN DIARIO.JS - Reemplazar/Agregar esta función fundamental */
 
-function agregarLinea() {
-    const container = document.getElementById('input-container'); // Asegúrate que este ID exista en tu HTML (el div que envuelve las filas)
-    if (!container) return;
-
-    // 1. Crear el contenedor de la fila
+function agregarLinea(contextEl) {
+    // Determinar en qué bloque-input-container operar
+    let container = null;
+ 
+    if (contextEl) {
+        const bloque = contextEl.closest
+            ? (contextEl.closest('.bloque-asiento-dinamico') || contextEl.closest('.bloque-input-container'))
+            : null;
+        if (bloque) {
+            container = bloque.classList.contains('bloque-input-container')
+                ? bloque
+                : bloque.querySelector('.bloque-input-container');
+        }
+    }
+ 
+    // Fallback: primer bloque disponible
+    if (!container) container = document.querySelector('.bloque-input-container');
+    if (!container) return null;
+ 
     const div = document.createElement('div');
     div.className = 'fila-movimiento';
-    div.style.display = 'flex'; // Asegurar estilo si falta CSS
-    div.style.gap = '10px';
-    div.style.marginBottom = '10px';
-
-    // 2. INYECTAR EL HTML COMPLETO (Aquí estaba el fallo, antes estaba vacío)
+ 
     div.innerHTML = `
-        <input type="hidden" name="cuenta_id[]" class="hidden-id-cuenta" value="0">
-        <input type="hidden" name="entidad_id[]" class="hidden-entidad-id" value="">
-        <input type="hidden" name="vencimiento[]" class="hidden-vencimiento" value="">
-        
-        <input type="text" name="cuenta_nombre[]" class="input-cuenta input-papel" 
-        placeholder="Selecciona cuenta..." autocomplete="off" 
-        onblur="setTimeout(() => detectarCuentaCorriente(this), 200)"
-         style="flex: 2; min-width: 200px;">
-        
-        <input type="number" step="0.01" name="debe[]" class="input-debe input-papel" 
-               placeholder="0.00" oninput="detectarLado(this)" style="flex: 1;">
-        
-        <input type="number" step="0.01" name="haber[]" class="input-haber input-papel" 
-               placeholder="0.00" oninput="detectarLado(this)" style="flex: 1;">
-        
-        <button type="button" class="btn-delete" onclick="eliminarLinea(this)" tabindex="-1" style="color:red; border:none; background:none; cursor:pointer;">✖</button>
+        <div>
+            <input type="number" step="0.01" name="debe[]"
+                   class="input-papel input-monto input-debe"
+                   placeholder="0.00" onkeyup="detectarLado(this)">
+        </div>
+        <div style="grid-column: 2 / 4; display: flex;">
+            <input type="text" name="cuenta_nombre[]"
+                   class="input-papel input-cuenta input-smart"
+                   placeholder="Escribe la cuenta..."
+                   onchange="buscarId(this)" oninput="buscarId(this)"
+                   onblur="setTimeout(() => detectarCuentaCorriente(this), 200)"
+                   autocomplete="off">
+            <input type="hidden" name="cuenta_id[]"   class="hidden-id-cuenta"  value="0">
+            <input type="hidden" name="entidad_id[]"  class="hidden-entidad-id" value="">
+            <input type="hidden" name="vencimiento[]" class="hidden-vencimiento" value="">
+        </div>
+        <div>
+            <input type="number" step="0.01" name="haber[]"
+                   class="input-papel input-monto text-right input-haber"
+                   placeholder="0.00" onkeyup="detectarLado(this)">
+        </div>
+        <div>
+            <button type="button" class="btn-eliminar-fila"
+                    onclick="eliminarLinea(this)" tabindex="-1"
+                    title="Eliminar renglón">×</button>
+        </div>
     `;
-
-    // 3. Agregar al DOM
+ 
     container.appendChild(div);
-
-    // 4. REACTIVAR LA INTELIGENCIA (Autocompletado y Eventos)
-    // Esto es vital: la nueva fila es "tonta" hasta que le conectamos el cerebro
+ 
     const nuevoInput = div.querySelector('.input-cuenta');
-
-    // Conectar autocompletado (asumiendo que setupAutocomplete existe y listaComprobantes/cuentas está global)
-    // Si tienes la lista de cuentas en una variable global 'listaCuentas' o en el HTML:
-    const mainData = document.getElementById('main-container');
-    let cuentasData = [];
-    try { cuentasData = JSON.parse(mainData.getAttribute('data-cuentas') || '[]'); } catch (e) { }
-
-    if (typeof setupAutocomplete === 'function') {
-        setupAutocomplete(nuevoInput, cuentasData); // Reactivamos el autocompletado
+ 
+    if (typeof setupAutocomplete === 'function' && window._opcionesCuentas && window._opcionesCuentas.length) {
+        setupAutocomplete(nuevoInput, window._opcionesCuentas);
     }
-
-    // Conectar el detector de ventas al nuevo input
+ 
     nuevoInput.addEventListener('input', function () {
         if (typeof detectarVentaAutomatica === 'function') detectarVentaAutomatica(this);
     });
-
-    return div; // Devolvemos la fila por si alguien la necesita
+ 
+    return div;
 }
 
 function eliminarLinea(btn) {
-    const container = document.getElementById('input-container');
+    // Scope al bloque-input-container correcto
+    const container = btn.closest('.bloque-input-container');
+    if (!container) return;
+
     const filas = container.querySelectorAll('.fila-movimiento');
+
     if (filas.length <= 1) {
         const row = filas[0];
         row.querySelectorAll('input').forEach(input => {
-            input.value = ''; input.readOnly = false; input.style.backgroundColor = 'transparent';
+            input.value = '';
+            input.readOnly = false;
+            input.style.backgroundColor = 'transparent';
             if (input.classList.contains('input-cuenta')) {
-                input.style.textAlign = 'left'; input.style.fontStyle = 'normal'; input.style.color = '#333';
+                input.style.textAlign = 'left';
+                input.style.fontStyle = 'normal';
+                input.style.color = '#333';
             }
         });
-        row.querySelector('.input-debe').focus();
+        const primDebe = row.querySelector('.input-debe');
+        if (primDebe) primDebe.focus();
         return;
     }
-    const row = btn.closest('.fila-movimiento');
-    row.remove();
+
+    btn.closest('.fila-movimiento').remove();
 }
+
+
 
 function toggleIVA() {
     const check = document.getElementById('check-iva');
@@ -742,49 +751,73 @@ function buscarId(inputElement) {
 // ============================================================================
 // AUDITORÍA
 // ============================================================================
-function auditoriaFinal(event) {
-    const inputComprobante = document.getElementById('input-comprobante');
-    const tipoTexto = (inputComprobante.value || "").toLowerCase().trim();
-    const usaIVA = document.getElementById('check-iva') ? document.getElementById('check-iva').checked : false;
+function auditoriaFinalBloque(bloque, event) {
+    const inputComprobante = bloque.querySelector('.input-comprobante');
+    const tipoTexto = (inputComprobante ? inputComprobante.value : "").toLowerCase().trim();
+    const numBloque = bloque.dataset.asientoIdx || '?';
 
-    // NUEVO ESCUDO: preventDefault() es la magia que evita que la página se recargue
     const mostrarError = (titulo, mensaje) => {
-        if (event) { event.preventDefault(); }
+        if (event) event.preventDefault();
         Swal.fire({ icon: 'error', title: titulo, text: mensaje, confirmButtonColor: '#2c3e50' });
     };
 
-    if (tipoTexto === "") { mostrarError("Falta información", "Indica un Tipo de Comprobante."); return false; }
+    if (tipoTexto === "") {
+        mostrarError(`Asiento #${numBloque}: Falta información`, "Indica un Tipo de Comprobante.");
+        return false;
+    }
 
-    let totalDebe = 0; let totalHaber = 0;
-    let cuentasNombres = []; let movimientos = [];
-    const filas = document.querySelectorAll('#input-container .fila-movimiento');
+    let totalDebe = 0, totalHaber = 0;
+    const filas = bloque.querySelectorAll('.bloque-input-container .fila-movimiento');
 
     for (let i = 0; i < filas.length; i++) {
         const fila = filas[i];
-        const textoInput = fila.querySelector('.input-cuenta').value;
+        const textoInput = fila.querySelector('.input-cuenta') ? fila.querySelector('.input-cuenta').value : '';
         let nombreLimpio = "";
-        if (textoInput) nombreLimpio = textoInput.includes('-') ? textoInput.split('-')[1].trim().toLowerCase() : textoInput.trim().toLowerCase();
+        if (textoInput) {
+            nombreLimpio = textoInput.includes('-')
+                ? textoInput.split('-')[1].trim().toLowerCase()
+                : textoInput.trim().toLowerCase();
+        }
 
-        const debe = parseFloat(fila.querySelector('.input-debe').value) || 0;
-        const haber = parseFloat(fila.querySelector('.input-haber').value) || 0;
+        const debe = parseFloat(fila.querySelector('.input-debe') ? fila.querySelector('.input-debe').value : 0) || 0;
+        const haber = parseFloat(fila.querySelector('.input-haber') ? fila.querySelector('.input-haber').value : 0) || 0;
 
-        // NUEVO ESCUDO ANTI-HACKERS: Bloquear negativos en el Frontend
         if (debe < 0 || haber < 0) {
-            mostrarError("Monto Inválido", "En contabilidad no existen los montos negativos. Usa el Debe o el Haber según corresponda.");
+            mostrarError(`Asiento #${numBloque}: Monto Inválido`,
+                "En contabilidad no existen los montos negativos.");
             return false;
         }
 
         if (nombreLimpio || debe > 0 || haber > 0) {
-            if (!nombreLimpio && (debe > 0 || haber > 0)) { mostrarError("Incompleto", "Faltan nombres de cuentas."); return false; }
-            cuentasNombres.push(nombreLimpio);
-            movimientos.push({ nombre: nombreLimpio, debe, haber });
-            totalDebe += debe; totalHaber += haber;
+            if (!nombreLimpio && (debe > 0 || haber > 0)) {
+                mostrarError(`Asiento #${numBloque}: Incompleto`, "Faltan nombres de cuentas.");
+                return false;
+            }
+            totalDebe += debe;
+            totalHaber += haber;
         }
     }
 
-    if (cuentasNombres.length === 0) { mostrarError("Vacío", "No hay cuentas."); return false; }
-    if (Math.abs(totalDebe - totalHaber) > 0.01) { mostrarError("Error", `El asiento no cuadra.\nDiferencia: ${Math.abs(totalDebe - totalHaber).toFixed(2)}`); return false; }
+    if (totalDebe === 0 && totalHaber === 0) {
+        mostrarError(`Asiento #${numBloque}: Vacío`, "No hay cuentas.");
+        return false;
+    }
+    if (Math.abs(totalDebe - totalHaber) > 0.01) {
+        mostrarError(
+            `Asiento #${numBloque}: No cuadra`,
+            `Diferencia: ${Math.abs(totalDebe - totalHaber).toFixed(2)}`
+        );
+        return false;
+    }
+    return true;
+}
 
+// Wrapper que itera todos los bloques. Mantiene la firma original.
+function auditoriaFinal(event) {
+    const bloques = document.querySelectorAll('.bloque-asiento-dinamico');
+    for (const bloque of bloques) {
+        if (!auditoriaFinalBloque(bloque, event)) return false;
+    }
     return true;
 }
 // ============================================================================
@@ -844,39 +877,37 @@ function setupAutocomplete(inp, arrDatos) {
 
             if (inputCuenta.dataset.ignorarAsistente === "true") return;
 
-            // Callback para activar el escudo si el usuario cancela
             const onCancel = () => {
                 inputCuenta.dataset.ignorarAsistente = "true";
                 setTimeout(() => inputCuenta.focus(), 100);
             };
 
-            // 1. ASISTENTE DE VENTAS (INTEGRACIÓN INTELIGENTE)
-            // Usamos la nueva función global que analiza la naturaleza contable
-            if (typeof esVentaDeResultado === 'function' && esVentaDeResultado(val)) {
+            // Scope al bloque activo
+            const bloque = inputCuenta.closest('.bloque-asiento-dinamico');
+            const scopeEl = bloque || document;
 
+            // 1. ASISTENTE DE VENTAS
+            if (typeof esVentaDeResultado === 'function' && esVentaDeResultado(val)) {
                 const usaIVA = document.getElementById('check-iva').checked;
                 if (!usaIVA) return;
-
                 const haberInput = row.querySelector('.input-haber');
-                if (haberInput.value !== "") return; // Si ya escribió algo, no molestamos
+                if (haberInput.value !== "") return;
 
                 let totalDebe = 0;
-                document.querySelectorAll('.input-debe').forEach(inp => { totalDebe += parseFloat(inp.value) || 0; });
+                scopeEl.querySelectorAll('.input-debe').forEach(inp => { totalDebe += parseFloat(inp.value) || 0; });
 
                 if (totalDebe > 0) {
-                    // Función auxiliar para mostrar el modal (ya la tienes definida al final de diario.js)
                     preguntarVenta(row, totalDebe, () => {
-                        // Callback si cancela: Bloquear asistente temporalmente
                         inputCuenta.dataset.ignorarAsistente = "true";
                         setTimeout(() => inputCuenta.focus(), 100);
                     });
                 }
 
-                // 2. ASISTENTE DE CAPITAL (Sin cambios)
+                // 2. ASISTENTE DE CAPITAL
             } else if (val.includes('capital')) {
                 let totalDebe = 0, totalHaber = 0;
-                document.querySelectorAll('.input-debe').forEach(el => { totalDebe += parseFloat(el.value) || 0; });
-                document.querySelectorAll('.input-haber').forEach(el => { totalHaber += parseFloat(el.value) || 0; });
+                scopeEl.querySelectorAll('.input-debe').forEach(el => { totalDebe += parseFloat(el.value) || 0; });
+                scopeEl.querySelectorAll('.input-haber').forEach(el => { totalHaber += parseFloat(el.value) || 0; });
                 let diferencia = totalDebe - totalHaber;
                 if (diferencia > 0) {
                     const haberInput = row.querySelector('.input-haber');
@@ -889,38 +920,29 @@ function setupAutocomplete(inp, arrDatos) {
                     }
                 }
 
-                // 3. ASISTENTE DE IVA COMPRAS (Sin cambios)
+                // 3. ASISTENTE DE IVA COMPRAS
             } else if (val.includes('iva') && (val.includes('compras') || val.includes('credito') || val.includes('crédito'))) {
                 let base = 0;
-                document.querySelectorAll('.input-debe').forEach(inp => { if (!row.contains(inp)) base += parseFloat(inp.value) || 0; });
-                if (base > 0 && row.querySelector('.input-debe').value === "") preguntarCompra(row, base, row.querySelector('.input-debe'));
+                scopeEl.querySelectorAll('.input-debe').forEach(inp => { if (!row.contains(inp)) base += parseFloat(inp.value) || 0; });
+                if (base > 0 && row.querySelector('.input-debe').value === "") {
+                    preguntarCompra(row, base, row.querySelector('.input-debe'));
+                }
 
-                // 4. ASISTENTE DE DESCUENTOS (Lógica Inversa: Bruto a Neto)
+                // 4. ASISTENTE DE DESCUENTOS
             } else if (val.includes('descuentos') || val.includes('bonificaciones')) {
+                let tipoDescuento = '', montoBrutoDetectado = 0, inputDestino = null;
 
-                let tipoDescuento = '';
-                let montoBrutoDetectado = 0;
-                let inputDestino = null;
-
-                // D.1 Descuentos Concedidos (Pérdida -> DEBE). Buscamos dinero en el DEBE.
                 if (val.includes('concedidos') || val.includes('cedidos')) {
                     tipoDescuento = 'concedido';
                     inputDestino = row.querySelector('.input-debe');
-                    document.querySelectorAll('.input-debe').forEach(inp => {
-                        if (!row.contains(inp)) montoBrutoDetectado += parseFloat(inp.value) || 0;
-                    });
-
-                    // D.2 Descuentos Obtenidos (Ganancia -> HABER). Buscamos deuda en el HABER.
+                    scopeEl.querySelectorAll('.input-debe').forEach(inp => { if (!row.contains(inp)) montoBrutoDetectado += parseFloat(inp.value) || 0; });
                 } else if (val.includes('obtenidos') || val.includes('ganados')) {
                     tipoDescuento = 'obtenido';
                     inputDestino = row.querySelector('.input-haber');
-                    document.querySelectorAll('.input-haber').forEach(inp => {
-                        if (!row.contains(inp)) montoBrutoDetectado += parseFloat(inp.value) || 0;
-                    });
+                    scopeEl.querySelectorAll('.input-haber').forEach(inp => { if (!row.contains(inp)) montoBrutoDetectado += parseFloat(inp.value) || 0; });
                 }
 
-                if (tipoDescuento && montoBrutoDetectado > 0 && inputDestino.value === "") {
-                    // Preparamos las tasas
+                if (tipoDescuento && montoBrutoDetectado > 0 && inputDestino && inputDestino.value === "") {
                     const mainContainer = document.getElementById('main-container');
                     let tasas = [];
                     try { tasas = JSON.parse(mainContainer.getAttribute('data-tasas-iva') || '[]'); } catch (e) { }
@@ -930,47 +952,44 @@ function setupAutocomplete(inp, arrDatos) {
                     Swal.fire({
                         title: 'Calculadora de Descuentos',
                         html: `
-                    <div style="text-align:left; font-size:0.9em;">
-                        <p>1. Monto con IVA detectado (Bruto):</p>
-                        <input type="number" id="swal-bruto" class="swal2-input" value="${montoBrutoDetectado.toFixed(2)}" step="0.01">
-                        <p style="margin-top:10px;">2. Tasa de IVA (para hallar el Neto):</p>
-                        <select id="swal-tasa-desc" class="swal2-input" style="height:40px;">${opcionesHTML}</select>
-                        <p style="margin-top:10px;">3. Porcentaje de Descuento (sobre Neto):</p>
-                        <div style="display:flex; align-items:center; gap:5px;">
-                            <input type="number" id="swal-porc" class="swal2-input" placeholder="Ej: 5" style="width:100px;">
-                            <span style="font-weight:bold; font-size:1.2em;">%</span>
-                        </div>
-                    </div>
-                `,
+                            <div style="text-align:left; font-size:0.9em;">
+                                <p>1. Monto con IVA detectado (Bruto):</p>
+                                <input type="number" id="swal-bruto" class="swal2-input" value="${montoBrutoDetectado.toFixed(2)}" step="0.01">
+                                <p style="margin-top:10px;">2. Tasa de IVA (para hallar el Neto):</p>
+                                <select id="swal-tasa-desc" class="swal2-input" style="height:40px;">${opcionesHTML}</select>
+                                <p style="margin-top:10px;">3. Porcentaje de Descuento (sobre Neto):</p>
+                                <div style="display:flex; align-items:center; gap:5px;">
+                                    <input type="number" id="swal-porc" class="swal2-input" placeholder="Ej: 5" style="width:100px;">
+                                    <span style="font-weight:bold; font-size:1.2em;">%</span>
+                                </div>
+                            </div>`,
                         icon: 'question',
                         showCancelButton: true,
                         confirmButtonText: 'Calcular y Ajustar',
                         cancelButtonText: 'Cancelar',
                         confirmButtonColor: '#e67e22',
-                        preConfirm: () => {
-                            return {
-                                bruto: parseFloat(document.getElementById('swal-bruto').value) || 0,
-                                tasa: parseFloat(document.getElementById('swal-tasa-desc').value) || 0,
-                                porc: parseFloat(document.getElementById('swal-porc').value) || 0
-                            }
-                        }
+                        preConfirm: () => ({
+                            bruto: parseFloat(document.getElementById('swal-bruto').value) || 0,
+                            tasa: parseFloat(document.getElementById('swal-tasa-desc').value) || 0,
+                            porc: parseFloat(document.getElementById('swal-porc').value) || 0
+                        })
                     }).then((result) => {
                         if (result.isConfirmed) {
                             const { bruto, tasa, porc } = result.value;
-                            const neto = bruto / (1 + (tasa / 100)); // Neto real
-                            const montoDescuento = neto * (porc / 100); // Descuento sobre neto
-
+                            const neto = bruto / (1 + (tasa / 100));
+                            const montoDescuento = neto * (porc / 100);
                             inputDestino.value = montoDescuento.toFixed(2);
                             detectarLado(inputDestino);
                             ajustarContraparteDescuento(tipoDescuento, bruto, montoDescuento, row);
                             actualizarTotales();
                         } else {
-                            onCancel(); // Activamos escudo si cancela
+                            onCancel();
                         }
                     });
                 }
             }
         }
+
         // ============================================================
         // LÓGICA DE BÚSQUEDA Y FILTRADO (ESTO ES LO QUE FALTABA)
         // ============================================================
@@ -1176,15 +1195,18 @@ function preguntarCompra(row, base, inputDebe, onCancelCallback) {
 }
 
 function ajustarContraparteDescuento(tipo, montoBase, descuento, rowDescuento) {
+    // Scope al bloque del renglón de descuento
+    const bloqueDescuento = rowDescuento.closest('.bloque-asiento-dinamico');
+    const scopeEl = bloqueDescuento || document;
+
     let selector = (tipo === 'concedido') ? '.input-debe' : '.input-haber';
-    const inputs = document.querySelectorAll(selector);
+    const inputs = scopeEl.querySelectorAll(selector);
     let ajustado = false;
 
     inputs.forEach(inp => {
         if (rowDescuento.contains(inp)) return;
         const val = parseFloat(inp.value) || 0;
 
-        // Si el valor coincide con el Bruto (con tolerancia de 1 peso)
         if (Math.abs(val - montoBase) < 1.0) {
             const nuevoValor = val - descuento;
             inp.value = nuevoValor.toFixed(2);
@@ -1207,6 +1229,7 @@ function ajustarContraparteDescuento(tipo, montoBase, descuento, rowDescuento) {
         });
     }
 }
+
 function toggleCalculadora() {
     crearCalculadora(); // Asegura que el HTML exista
     const calc = document.getElementById('konta-calc');

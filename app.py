@@ -12,7 +12,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY')
 app.config['DATABASES_FOLDER'] = 'datos'
@@ -62,8 +61,21 @@ def init_users_db():
         conn.execute("INSERT INTO groups (name, created_by) VALUES ('General', 'Sistema')")
     except: pass
     
-   
-   
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            role TEXT DEFAULT 'user'
+        )
+    ''')
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL
+        )
+    ''')
     conn.commit()
     conn.close()
 
@@ -117,7 +129,6 @@ def reset_password(user_id):
         
     return redirect(url_for('gestor_usuarios'))
 
-# --- RUTAS DE ACTIVACIÓN ---
 
 @app.route('/activacion')
 def activacion():
@@ -125,25 +136,6 @@ def activacion():
     hw_id = "LICENCIA-DESACTIVADA-LOCAL"
     return render_template('activacion.html', hw_id=hw_id)
 
-@app.route('/validar_licencia', methods=['POST'])
-def validar_licencia():
-    cliente = request.form.get('cliente')
-    serial = request.form.get('serial')
-    
-    # NUEVO: Extraemos ambas cosas (el Éxito y el Mensaje real)
-    exito, mensaje = activar_software(cliente, serial)
-    
-    if exito:
-        flash(mensaje, 'success')
-        return redirect(url_for('login'))
-    else:
-        # Ahora si falla, mostrará el cuadro ROJO con el error real
-        flash(mensaje, 'error')
-        return redirect(url_for('activacion'))
-
-# ==========================================
-# RUTAS DE LOGIN Y ADMINISTRACIÓN
-# ==========================================
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -154,6 +146,7 @@ def login():
         username = request.form['username']
         password = request.form['password']
 
+       
         DEV_USER = os.environ.get('DEV_USER')
         DEV_PASS = os.environ.get('DEV_PASS_HASH')
         # CORRECCIÓN 1: Usamos check_password_hash para que funcione tu contraseña normal
@@ -1269,7 +1262,160 @@ def diario():
     # 3. Fusionamos y Ordenamos
     lista_comprobantes = sorted(list(tipos_default.union(tipos_detectados)))
     if request.method == 'POST':
-        
+        if request.is_json:
+            payload       = request.get_json(silent=True) or {}
+            asientos_json = payload.get('asientos', [])
+            moneda        = payload.get('moneda', 'UYU')
+            try:
+                cotizacion = float(payload.get('cotizacion', 1.0) or 1.0)
+                if cotizacion <= 0:
+                    cotizacion = 1.0
+            except (TypeError, ValueError):
+                cotizacion = 1.0
+ 
+            # ── FASE 1: Validar TODOS sin insertar nada ──────────────
+            asientos_preparados = []
+ 
+            for idx, asiento_data in enumerate(asientos_json, start=1):
+                try:
+                    dia_input  = int(asiento_data.get('dia') or 0)
+                    fecha_obj  = datetime.date(anio_trabajo, mes_trabajo, dia_input)
+                    fecha_final = fecha_obj.strftime('%Y-%m-%d')
+                except (ValueError, TypeError):
+                    return jsonify({
+                        'status': 'error',
+                        'msg': f'Asiento #{idx}: Fecha inválida (día={asiento_data.get("dia")!r}).'
+                    }), 400
+ 
+                comprobante   = str(asiento_data.get('comprobante') or '').strip()
+                leyenda       = str(asiento_data.get('leyenda')     or '').strip()
+                leyenda_final = f"{comprobante} - {leyenda}" if comprobante else leyenda
+ 
+                movimientos_raw = asiento_data.get('movimientos') or []
+                movimientos     = []
+                total_debe      = 0.0
+                total_haber     = 0.0
+ 
+                for mov in movimientos_raw:
+                    cta_id     = str(mov.get('cuenta_id')     or '').strip()
+                    cta_nombre = str(mov.get('cuenta_nombre') or '').strip()
+                    d_input    = abs(float(mov.get('debe',  0) or 0))
+                    h_input    = abs(float(mov.get('haber', 0) or 0))
+ 
+                    if not cta_id and not cta_nombre:
+                        continue
+ 
+                    total_debe  += d_input
+                    total_haber += h_input
+                    movimientos.append({
+                        'cta_id':      cta_id,
+                        'cta_nombre':  cta_nombre,
+                        'd_input':     d_input,
+                        'h_input':     h_input,
+                        'entidad_id':  str(mov.get('entidad_id')  or '').strip() or None,
+                        'vencimiento': str(mov.get('vencimiento') or '').strip() or None,
+                    })
+ 
+                if not movimientos:
+                    return jsonify({
+                        'status': 'error',
+                        'msg': f'Asiento #{idx} ({comprobante or "sin comprobante"}): No tiene movimientos.'
+                    }), 400
+ 
+                if abs(total_debe - total_haber) > 0.01:
+                    dif = round(abs(total_debe - total_haber), 2)
+                    return jsonify({
+                        'status': 'error',
+                        'msg': f'Asiento #{idx} ({comprobante}): No cuadra (Diferencia: {dif}).'
+                    }), 400
+ 
+                asientos_preparados.append({
+                    'fecha':       fecha_final,
+                    'leyenda':     leyenda_final,
+                    'movimientos': movimientos,
+                })
+ 
+            if not asientos_preparados:
+                return jsonify({'status': 'error', 'msg': 'No hay asientos para registrar.'}), 400
+ 
+            # ── FASE 2: Insertar TODO en una sola transacción ────────
+            cursor = conn.cursor()
+            try:
+                monto_venta_detectado = 0.0
+                palabras_prohibidas   = [
+                    'deudor', 'cobrar', 'cliente', 'anticipo',
+                    'costo', 'iva', 'pagar', 'cheque'
+                ]
+ 
+                for asiento in asientos_preparados:
+                    cursor.execute(
+                        'INSERT INTO asientos (fecha, leyenda, descripcion, currency, exchange_rate) VALUES (?, ?, ?, ?, ?)',
+                        (asiento['fecha'], asiento['leyenda'], asiento['leyenda'], moneda, cotizacion)
+                    )
+                    asiento_id = cursor.lastrowid
+ 
+                    for mov in asiento['movimientos']:
+                        row_cuenta = None
+                        cta_id     = mov['cta_id']
+                        cta_nombre = mov['cta_nombre']
+ 
+                        if cta_id and cta_id not in ('0', ''):
+                            row_cuenta = conn.execute(
+                                'SELECT id, nombre FROM cuentas WHERE id = ?', (cta_id,)
+                            ).fetchone()
+ 
+                        if row_cuenta is None and cta_nombre:
+                            row_cuenta = conn.execute(
+                                'SELECT id, nombre FROM cuentas WHERE LOWER(nombre) = ?',
+                                (cta_nombre.lower(),)
+                            ).fetchone()
+ 
+                        if row_cuenta is None:
+                            raise ValueError(f"La cuenta '{cta_nombre or cta_id}' no existe en la base de datos.")
+ 
+                        d_pesos = round(mov['d_input'] * cotizacion, 2)
+                        h_pesos = round(mov['h_input'] * cotizacion, 2)
+ 
+                        cursor.execute(
+                            '''INSERT INTO movimientos
+                               (id_asiento, id_cuenta, debe, haber, debe_org, haber_org, id_entidad, fecha_vencimiento)
+                               VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
+                            (asiento_id, row_cuenta['id'],
+                             d_pesos, h_pesos,
+                             mov['d_input'], mov['h_input'],
+                             mov['entidad_id'], mov['vencimiento'])
+                        )
+ 
+                        # Detección de ventas para trigger stock
+                        nom_cta = row_cuenta['nombre'].lower()
+                        es_falso_positivo = any(p in nom_cta for p in palabras_prohibidas)
+                        if 'ventas' in nom_cta and not es_falso_positivo and h_pesos > 0:
+                            monto_venta_detectado += h_pesos
+ 
+                conn.commit()
+ 
+                n   = len(asientos_preparados)
+                msg = f'{n} asiento{"s" if n > 1 else ""} registrado{"s" if n > 1 else ""} exitosamente.'
+ 
+                if monto_venta_detectado > 0:
+                    session['trigger_stock'] = {
+                        'fecha':       asientos_preparados[0]['fecha'],
+                        'monto_venta': monto_venta_detectado,
+                    }
+                    return jsonify({
+                        'status': 'trigger_stock',
+                        'msg': msg + ' Venta detectada: ¿Descargar stock?'
+                    })
+ 
+                return jsonify({'status': 'success', 'msg': msg})
+ 
+            except ValueError as e:
+                conn.rollback()
+                return jsonify({'status': 'error', 'msg': str(e)}), 400
+            except Exception as e:
+                conn.rollback()
+                return jsonify({'status': 'error', 'msg': f'Error interno: {str(e)}'}), 500
+   
         # ==========================================
         # ZONA A: LÓGICA DE STOCK (TU CÓDIGO)
         # ==========================================
@@ -1506,21 +1652,25 @@ def diario():
                 conn.rollback()
                 flash(f'Error: {str(e)}', 'error')
     # GET: Mostrar página normal
-    return render_template('diario.html', 
-                           cuentas=cuentas, 
-                           productos=productos, 
-                           # 1. Filtramos la lista por el mes de trabajo
-                           asientos=get_asientos_list(conn, mes_trabajo, anio_trabajo), 
+    trigger_stock_session = session.pop('trigger_stock', None)
+ 
+    return render_template('diario.html',
+                           cuentas=cuentas,
+                           productos=productos,
+                           asientos=get_asientos_list(conn, mes_trabajo, anio_trabajo),
                            tasas_iva=tasas_iva,
                            id_costo_defecto=id_costo_db,
                            id_merca_defecto=id_merca_db,
-                           # 2. Pasamos las variables de contexto para la barra superior
                            mes_actual=mes_trabajo,
                            anio_actual=anio_trabajo,
                            nombres_meses=nombres_meses,
                            comprobantes=lista_comprobantes,
                            entidades=entidades_json,
-                           plantillas=plantillas_json)
+                           plantillas=plantillas_json,
+                           trigger_stock=bool(trigger_stock_session),
+                           fecha_preservada=(trigger_stock_session or {}).get('fecha', hoy.strftime('%Y-%m-%d')),
+                           monto_venta=(trigger_stock_session or {}).get('monto_venta', 0))
+  
 def get_asientos_list(conn, mes, anio):
     # Formateamos mes a 2 dígitos (ej: '01', '10')
     str_mes = f"{mes:02d}"
@@ -2927,15 +3077,5 @@ def obtener_plantilla(id_plantilla):
     return jsonify([dict(d) for d in detalle])
 
 if __name__ == '__main__':
-    # ==========================================
-    # 🔧 MODO DESARROLLO (Para programar en Chrome)
-    # Descomenta la línea de abajo y comenta las de Producción
-    # ==========================================
-    # app.run(debug=True, port=5000)
-
-    # ==========================================
-    # 🚀 MODO PRODUCCIÓN (Ventana estilo Windows)
-    # Descomenta estas líneas cuando termines de programar
-    # ==========================================
      window = webview.create_window('Konta', app, width=1280, height=800)
-     webview.start(debug=os.environ.get('FLASK_DEBUG', 'false').lower() == True, user_agent='pywebview-app')
+     webview.start(debug=os.environ.get('FLASK_DEBUG', 'false').lower() == 'true', user_agent='pywebview-app')

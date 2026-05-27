@@ -216,3 +216,47 @@ h1 { margin-bottom: 30px; }
     background-color: #3498db !important;
     color: #ffffff !important;
 }
+/* ── MULTI-ASIENTO: Bloques dinámicos ── */
+#bloques-container { display: flex; flex-direction: column; gap: 0; }
+
+.bloque-asiento-dinamico {
+    border: 1px solid #e0e7ee;
+    border-radius: 8px;
+    padding: 20px 20px 15px;
+    margin-bottom: 18px;
+    background: #fff;
+    position: relative;
+    box-shadow: 0 1px 5px rgba(0,0,0,0.06);
+}
+.bloque-asiento-dinamico:not(:first-child) {
+    border-color: #3498db;
+    background: #f8fbff;
+}
+.bloque-asiento-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #f0f0f0;
+}
+.bloque-numero {
+    font-weight: 700;
+    color: #2c3e50;
+    font-size: 0.9em;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+}
+.btn-eliminar-bloque {
+    background: #e74c3c;
+    color: white;
+    border: none;
+    padding: 5px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.78em;
+    font-weight: bold;
+    transition: background 0.2s;
+}
+.btn-eliminar-bloque:hover { background: #c0392b; }
+#btn-agregar-asiento:disabled { opacity: 0.45; cursor: not-allowed; }
