@@ -1,0 +1,199 @@
+/* static/css/balances.css */
+
+/* --- CONTENEDOR PRINCIPAL --- */
+.dashboard-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding-bottom: 50px;
+}
+
+h1.titulo-principal {
+    margin-bottom: 40px;
+    color: #2c3e50;
+    font-weight: 800;
+    letter-spacing: -1px;
+}
+
+/* --- TARJETAS (CARDS) --- */
+.balance-card {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    margin-bottom: 40px;
+    border: 1px solid #eef2f7;
+    transition: transform 0.2s;
+}
+
+.balance-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+}
+
+/* ENCABEZADOS DE SECCIÓN */
+.card-header {
+    border-bottom: 2px solid #2c3e50;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    text-align: center;
+}
+
+.card-header h2 { margin: 0; font-size: 1.8em; color: #2c3e50; }
+.card-header p { margin: 5px 0 0 0; color: #7f8c8d; font-size: 0.95em; }
+
+/* --- ESTRUCTURA DE COLUMNAS --- */
+.grid-dos-columnas {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+}
+
+.columna-financiera {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* --- TABLAS DE DATOS --- */
+.bloque-grupo {
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid transparent;
+}
+
+/* Títulos de Grupos (Activo, Pasivo...) */
+.titulo-grupo {
+    padding: 10px 15px;
+    margin: 0;
+    text-align: center;
+    font-size: 1em;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+/* Contenido de la Tabla */
+.tabla-wrapper {
+    background: white;
+    padding: 0;
+}
+
+.table-clean {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95em;
+}
+
+.table-clean td {
+    padding: 8px 15px;
+    border-bottom: 1px solid #f0f0f0;
+    color: #555;
+}
+.table-clean tr:last-child td { border-bottom: none; }
+
+.monto {
+    text-align: right;
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+/* Pie de Grupo (Totales parciales) */
+.footer-grupo {
+    padding: 10px 15px;
+    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.95em;
+}
+
+/* --- COLORES SEMÁNTICOS (Temas) --- */
+/* Verde (Activos / Ganancias) */
+.tema-verde { border-color: #badbcc; }
+.tema-verde .titulo-grupo { background: #d1e7dd; color: #0f5132; }
+.tema-verde .footer-grupo { background: #d1e7dd; color: #0f5132; }
+
+/* Rojo (Egresos / Alertas) */
+.tema-rojo { border-color: #f5c6cb; }
+.tema-rojo .titulo-grupo { background: #f8d7da; color: #842029; }
+.tema-rojo .footer-grupo { background: #f8d7da; color: #842029; }
+
+/* Amarillo (Pasivo) */
+.tema-amarillo { border-color: #ffecb5; }
+.tema-amarillo .titulo-grupo { background: #fff3cd; color: #664d03; }
+.tema-amarillo .footer-grupo { background: #fff3cd; color: #664d03; }
+
+/* Gris (Patrimonio) */
+.tema-gris { border-color: #d6d8db; }
+.tema-gris .titulo-grupo { background: #e2e3e5; color: #41464b; }
+.tema-gris .footer-grupo { background: #e2e3e5; color: #41464b; }
+
+/* --- RESULTADO DEL EJERCICIO --- */
+.resultado-final {
+    margin-top: 20px;
+    padding: 20px 30px;
+    background-color: #2c3e50;
+    color: white;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 10px rgba(44, 62, 80, 0.2);
+}
+
+.resultado-valor { font-size: 1.8em; font-weight: 800; }
+.txt-positivo { color: #4cd137; } /* Verde neón */
+.txt-negativo { color: #e84118; } /* Rojo neón */
+
+/* --- BARRA DE COMPROBACIÓN (BALANCE) --- */
+.barra-comprobacion {
+    margin-top: 30px;
+    padding: 15px 20px;
+    border-top: 4px double #2c3e50;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.estado-badge {
+    padding: 8px 25px;
+    border-radius: 50px;
+    font-weight: bold;
+    font-size: 0.9em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.estado-ok { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+.estado-error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+
+/* --- ESTILOS DE IMPRESIÓN --- */
+@media print {
+    /* Ocultar navegación, botones y sidebar */
+    .sidebar, .navbar, .no-print, header, .btn-guardar, button {
+        display: none !important;
+    }
+    
+    /* Ajustar contenedores para papel */
+    .dashboard-container {
+        width: 100%;
+        max-width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+    
+    body {
+        background: white;
+        font-size: 12pt;
+    }
+    
+    .balance-card {
+        box-shadow: none;
+        border: 1px solid #ccc;
+        page-break-inside: avoid; /* Evitar que se corte una tabla a la mitad */
+        margin-bottom: 20px;
+    }
+    
+    h1, h2, h3 { color: black !important; }
+}

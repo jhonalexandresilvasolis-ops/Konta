@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="users-wrapper">
+    <h1 class="text-center mb-4">👥 Gestión de Usuarios</h1>
+
+    <div class="row">
+        <div class="col-md-5">
+            <div class="card-user-form">
+                <h4>Nuevo Usuario</h4>
+                <p class="text-muted small">Crea cuentas para alumnos u otros profesores.</p>
+
+                <form action="/crear_usuario" method="POST">
+                    <div class="mb-3">
+                        <label class="form-label">Nombre de Usuario</label>
+                        <input type="text" name="username" class="form-control" placeholder="Ej: alumno1" required
+                            autocomplete="off">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Contraseña</label>
+                        <input type="password" name="password" class="form-control" required
+                            autocomplete="new-password">
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label">Rol / Permisos</label>
+                        <select name="role" class="form-select">
+                            <option value="user" selected>🎓 Alumno (Usuario Normal)</option>
+                            <option value="admin">👑 Administrador</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Crear Usuario</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-md-7">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h4>Usuarios Registrados</h4>
+                    <div class="table-responsive mt-3">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Usuario</th>
+                                    <th>Rol</th>
+                                    <th>Grupo</th>
+                                    <th>Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for u in users %}
+                                <tr>
+                                    <td class="fw-bold">{{ u.username }}</td>
+                                    <td>
+                                        {% if u.role == 'admin' %}
+                                        <span class="badge-admin">👑 Admin</span>
+                                        {% elif u.role == 'dev' %}
+                                        <span class="badge-dev">⚡ Dev</span>
+                                        {% else %}
+                                        <span class="badge-user">🎓 Alumno</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ u.group_name or 'General' }}</span>
+                                    </td>
+                                    <td>
+                                        {% if u.id != current_user.id and u.role != 'dev' %}
+
+                                        {% if current_user.role == 'dev' %}
+                                        <a href="/cambiar_rol/{{ u.id }}" class="btn btn-sm btn-outline-warning"
+                                            title="Cambiar Rol (Admin/Alumno)">
+                                            🔄
+                                        </a>
+                                        <a href="/reset_password/{{ u.id }}"
+                                            onclick="return confirm('¿Resetear la contraseña de {{ u.username }} a \'1234\'?')"
+                                            class="btn btn-sm btn-outline-info" title="Resetear clave a '1234'">
+                                            🔑
+                                        </a>
+                                        {% endif %}
+
+                                        <a href="/borrar_usuario/{{ u.id }}"
+                                            onclick="return confirm('¿Eliminar al usuario {{ u.username }}?')"
+                                            class="btn btn-sm btn-outline-danger">🗑️</a>
+                                        {% else %}
+                                        <span class="text-muted small">--</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

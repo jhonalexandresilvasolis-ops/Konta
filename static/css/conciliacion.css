@@ -1,0 +1,227 @@
+/* static/css/conciliacion.css */
+
+.conciliacion-container { max-width: 1300px; margin: 0 auto; padding-bottom: 120px; font-family: 'Segoe UI', sans-serif; }
+
+/* BARRA SUPERIOR */
+.selector-bar-wrapper { background: white; padding: 15px 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
+.btn-volver { text-decoration: none; color: #555; font-weight: 600; display: flex; align-items: center; gap: 5px; transition: color 0.2s; }
+.btn-volver:hover { color: #2c3e50; }
+.form-selector { display: flex; gap: 10px; align-items: center; }
+.form-selector select, .form-selector input { padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.95em; }
+.btn-cargar { background: #2c3e50; color: white; border: none; padding: 8px 18px; border-radius: 4px; cursor: pointer; font-weight: 600; }
+.btn-borrar-hoja { background: #fff; border: 1px solid #e74c3c; color: #e74c3c; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.9em; transition: 0.2s; }
+.btn-borrar-hoja:hover { background: #e74c3c; color: white; }
+
+/* BOTÓN IMPRIMIR (NUEVO) */
+.btn-imprimir { background: #34495e; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-left: 10px; }
+.btn-imprimir:hover { background: #2c3e50; }
+
+/* FASE 1: CARGA MANUAL */
+.papel-banco { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-top: 5px solid #f1c40f; }
+.saldo-input-container { margin: 20px 0; font-weight: bold; font-size: 1.1em; color: #2c3e50; }
+.saldo-input-container input { font-size: 1.1em; padding: 5px 10px; width: 150px; text-align: right; border: 2px solid #ccc; border-radius: 4px; }
+
+/* TABLA CARGA */
+.tabla-contable { width: 100%; border-collapse: collapse; margin-top: 15px; border: 1px solid #ddd; }
+.tabla-contable th { background: #f8f9fa; padding: 12px; text-align: left; border-bottom: 2px solid #2c3e50; color: #555; font-size: 0.9em; text-transform: uppercase; }
+.tabla-contable td { padding: 0; border-bottom: 1px solid #eee; }
+.tabla-contable input { width: 100%; padding: 10px; border: none; font-family: monospace; font-size: 1em; background: transparent; }
+.tabla-contable input:focus { background: #f0f8ff; outline: none; }
+
+.btn-mas { background: #27ae60; color: white; border: none; padding: 8px 15px; border-radius: 4px; margin-top: 10px; cursor: pointer; font-weight: bold; }
+.btn-secundario { background: #7f8c8d; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+.btn-guardar-ext { background: #34495e; color: white; padding: 10px 25px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+
+/* FASE 2: MESA DE PUNTEO */
+.toolbar-superior { text-align: center; margin-bottom: 15px; }
+.btn-magic { background: linear-gradient(135deg, #8e44ad, #9b59b6); color: white; border: none; padding: 10px 20px; border-radius: 30px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(142, 68, 173, 0.3); transition: transform 0.2s; }
+.btn-magic:hover { transform: scale(1.05); }
+
+.mesa-punteo { display: flex; gap: 30px; margin-top: 20px; }
+.columna-mayor { flex: 1; background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); overflow: hidden; display: flex; flex-direction: column; height: 600px; border: 1px solid #eee; }
+.mayor-header { background: #2c3e50; color: white; padding: 15px; text-align: center; }
+.mayor-header h3 { margin: 0; font-size: 1.1em; }
+.mayor-header .sub-h { font-size: 0.8em; opacity: 0.8; text-transform: uppercase; letter-spacing: 1px; }
+
+.tabla-scroll { flex: 1; overflow-y: auto; }
+.tabla-punteo { width: 100%; border-collapse: collapse; }
+.tabla-punteo th { position: sticky; top: 0; background: #ecf0f1; padding: 10px; font-size: 0.85em; text-align: left; color: #555; border-bottom: 2px solid #bdc3c7; z-index: 2; }
+.tabla-punteo td { padding: 8px 10px; border-bottom: 1px solid #eee; font-size: 0.9em; cursor: pointer; user-select: none; }
+.tabla-punteo tr:hover { background-color: #f1faff; }
+
+/* ESTADOS DE FILA */
+.item-row.selected { background-color: #fff3cd !important; }
+.item-row.conciliado { color: #ccc; text-decoration: line-through; background-color: #f9f9f9; }
+.item-row.conciliado td { color: #ccc !important; }
+.item-row.pendiente { background-color: #fff5f5; }
+.item-row.pendiente .monto { color: #c0392b; font-weight: bold; border: 2px solid #c0392b; border-radius: 12px; padding: 2px 8px; display: inline-block; background: white; }
+.item-row.conciliado.selected {
+    background-color: #ffe082 !important; /* Amarillo oscuro */
+    color: #555 !important;
+    text-decoration: none; /* Quitamos tachado momentáneamente para leer bien */
+    border-left: 4px solid #d35400;
+    }
+.monto { font-family: 'Courier New', monospace; text-align: right; }
+.fecha { color: #777; font-size: 0.85em; white-space: nowrap; }
+.saldo-final-col { padding: 15px; text-align: right; background: #f8f9fa; border-top: 2px solid #ddd; font-size: 1.1em; color: #2c3e50; font-weight: bold; }
+
+/* TOOLBAR FLOTANTE */
+.toolbar-conciliacion { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #2c3e50; padding: 12px 25px; border-radius: 50px; display: flex; gap: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); z-index: 1000; }
+.btn-tool { border: none; padding: 10px 25px; border-radius: 25px; cursor: pointer; font-weight: bold; color: white; font-size: 1em; transition: transform 0.2s; }
+.btn-tool:hover { transform: translateY(-2px); }
+.btn-match { background: #27ae60; }
+.btn-pending { background: #e74c3c; }
+
+/* HOJA DE TRABAJO */
+.hoja-trabajo { margin-top: 40px; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); border-top: 5px solid #3498db; margin-bottom: 50px; }
+.grid-resumen { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+.bloque-ajuste { background: #fff; }
+.ajuste-header { border-bottom: 2px solid #333; padding-bottom: 10px; font-weight: bold; font-size: 1.1em; color: #2c3e50; margin-bottom: 15px; display: flex; justify-content: space-between; }
+.ajuste-footer { border-top: 2px solid #333; padding-top: 10px; font-weight: bold; font-size: 1.2em; color: #2c3e50; margin-top: 15px; display: flex; justify-content: space-between; }
+.lista-ajustes { list-style: none; padding: 0; min-height: 100px; }
+.lista-ajustes li { padding: 8px 0; border-bottom: 1px dashed #eee; display: flex; justify-content: space-between; font-size: 0.95em; }
+.negativo { color: #e74c3c; }
+
+.resultado-final { text-align: center; margin-top: 30px; padding: 20px; font-size: 1.5em; font-weight: bold; border-radius: 8px; }
+.resultado-final.success { background: #e8f5e9; color: #27ae60; border: 2px solid #27ae60; }
+.resultado-final.error { background: #ffebee; color: #c0392b; border: 2px solid #c0392b; }
+
+.btn-crear-asiento { background: #f39c12; color: white; border: none; padding: 12px 20px; border-radius: 4px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; font-size: 1em; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+.btn-crear-asiento:hover { background: #d35400; }
+
+.footer-carga { display: flex; justify-content: space-between; margin-top: 30px; border-top: 2px solid #eee; padding-top: 20px; }
+.alerta-suma { color: #c0392b; background: #fadbd8; padding: 10px; border-radius: 4px; font-weight: bold; }
+
+/* --- ESTILOS DE CUENTA T (RECUPERADOS) --- */
+.contenedor-t { width: 90%; margin: 0 auto; background: white; border: 2px solid #333; font-family: 'Courier New', monospace; box-shadow: 5px 5px 0 rgba(0,0,0,0.1); }
+.cabecera-t { display: flex; border-bottom: 4px solid #333; background: #f9f9f9; }
+.titulo-columna { flex: 1; text-align: center; padding: 10px; font-weight: bold; font-size: 1.1em; }
+.titulo-columna.debe { color: #2c3e50; border-right: 2px solid #333; }
+.titulo-columna.haber { color: #2c3e50; }
+
+.cuerpo-t { display: flex; flex-direction: column; min-height: 150px; background: white; position: relative; }
+/* Línea central vertical usando gradiente para que se ajuste a la altura */
+.cuerpo-t::after { content: ''; position: absolute; top: 0; bottom: 0; left: 50%; width: 4px; background: #333; transform: translateX(-50%); }
+
+.fila-t { display: flex; border-bottom: 1px dashed #eee; position: relative; z-index: 2; }
+.celda-t { flex: 1; padding: 8px 15px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+.celda-t.izq { padding-right: 25px; color: #2c3e50; }
+.celda-t.der { padding-left: 25px; color: #2c3e50; }
+.ref-asiento { font-size: 0.75em; color: #999; font-weight: normal; font-family: sans-serif; }
+
+.fila-total { display: flex; border-top: 4px solid #333; font-weight: bold; background: #eee; position: relative; z-index: 3; }
+.total-box { flex: 1; text-align: right; padding: 10px 25px; font-size: 1.1em; }
+.total-box.izq { border-right: 4px solid #333; }
+
+.saldo-final-box { text-align: center; padding: 15px; background: #2c3e50; color: white; font-weight: bold; font-size: 1.2em; margin-top: 0; }
+
+/* --- MODO IMPRESIÓN --- */
+@media print {
+    .selector-bar-wrapper, .toolbar-conciliacion, .btn-crear-asiento, .btn-magic, .btn-imprimir, .btn-volver { display: none !important; }
+    .mesa-punteo { display: block; }
+    .columna-mayor { height: auto; border: 1px solid #000; margin-bottom: 20px; box-shadow: none; }
+    .hoja-trabajo { border: 1px solid #000; box-shadow: none; margin-top: 20px; page-break-inside: avoid; }
+    body { background: white; font-size: 12px; }
+    .tabla-scroll { overflow: visible; }
+}
+/* Agrega esto a tu CSS de conciliación */
+
+.item-ajuste {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px dashed #eee;
+}
+
+.acciones-ajuste {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.btn-mini-ajuste {
+    background-color: #f39c12;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    font-size: 0.9em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.1s;
+}
+
+.btn-mini-ajuste:hover {
+    background-color: #d35400;
+    transform: scale(1.1);
+}
+.btn-revert { 
+    background: #f39c12; 
+    margin: 0 10px; /* Separación de los otros botones */
+}
+.btn-revert:hover { background: #d35400; }
+.btn-ver-historial {
+    background-color: #3498db;
+    color: white;
+    text-decoration: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 0.9em;
+    font-weight: bold;
+    display: inline-block;
+}
+.btn-ver-historial:hover {
+    background-color: #2980b9;
+}
+.btn-terminar {
+    background-color: #27ae60; /* Verde Éxito */
+    color: white;
+    text-decoration: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: background 0.2s;
+    box-shadow: 0 2px 5px rgba(39, 174, 96, 0.3);
+}
+
+.btn-terminar:hover {
+    background-color: #219150;
+    transform: translateY(-1px);
+}
+
+.badge-cerrada {
+    background-color: #7f8c8d;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-weight: bold;
+    border: 1px solid #95a5a6;
+    cursor: default;
+}
+/* Botón pequeño para reabrir al lado del candado */
+.btn-reabrir {
+    background-color: #95a5a6;
+    color: white;
+    text-decoration: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2em;
+    transition: background 0.2s;
+    border: none;
+    cursor: pointer;
+}
+.btn-reabrir:hover {
+    background-color: #7f8c8d;
+    transform: scale(1.1);
+}

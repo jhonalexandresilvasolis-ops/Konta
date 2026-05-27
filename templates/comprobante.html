@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Comprobante #{{ asiento.id }}</title>
+    <style>
+        body { font-family: 'Helvetica', 'Arial', sans-serif; color: #333; margin: 40px; font-size: 14px; }
+        
+        /* Encabezado */
+        .header { border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-end; }
+        .empresa-nombre { font-size: 1.5em; font-weight: bold; text-transform: uppercase; }
+        .doc-titulo { font-size: 1.2em; font-weight: bold; color: #555; }
+        
+        /* Info del Asiento */
+        .info-grid { display: grid; grid-template-columns: auto 1fr; gap: 10px 20px; margin-bottom: 20px; background: #f9f9f9; padding: 15px; border-radius: 5px; border: 1px solid #eee; }
+        .label { font-weight: bold; color: #555; }
+        
+        /* Tabla de Movimientos */
+        table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+        th { background: #333; color: white; padding: 8px; text-align: left; font-size: 0.9em; text-transform: uppercase; }
+        td { padding: 8px; border-bottom: 1px solid #ddd; }
+        
+        /* Columnas numéricas */
+        .num { text-align: right; font-family: 'Courier New', monospace; font-weight: bold; }
+        .total-row td { border-top: 2px solid #333; border-bottom: none; font-weight: bold; background: #eee; }
+        
+        /* Firmas */
+        .firmas { margin-top: 80px; display: flex; justify-content: space-around; }
+        .firma-box { border-top: 1px solid #333; width: 30%; text-align: center; padding-top: 5px; font-size: 0.85em; color: #777; }
+        
+        /* Botón de Imprimir (Solo visible en pantalla) */
+        .no-print { text-align: right; margin-bottom: 20px; }
+        .btn-print { background: #2c3e50; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; text-decoration: none; display: inline-block; }
+        .btn-print:hover { background: #34495e; }
+
+        /* Multimoneda Badge */
+        .badge-moneda { display: inline-block; padding: 2px 6px; background: #eee; border: 1px solid #ccc; border-radius: 3px; font-size: 0.8em; margin-left: 10px; }
+
+        @media print {
+            .no-print { display: none; }
+            body { margin: 0; padding: 20px; }
+            .info-grid { background: none; border: 1px solid #ccc; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="no-print">
+        <a href="javascript:window.print()" class="btn-print">🖨️ Imprimir Comprobante</a>
+    </div>
+
+    <div class="header">
+        <div>
+            <div class="empresa-nombre">{{ empresa }}</div>
+            <div>Fecha: {{ asiento.fecha }}</div>
+        </div>
+        <div style="text-align: right;">
+            <div class="doc-titulo">ASIENTO CONTABLE</div>
+            <div style="font-size: 1.5em; font-weight: bold;"># {{ asiento.id }}</div>
+        </div>
+    </div>
+
+    <div class="info-grid">
+        <div class="label">Concepto / Leyenda:</div>
+        <div>{{ asiento.leyenda }}</div>
+
+        {% if asiento.currency and asiento.currency != 'UYU' %}
+            <div class="label">Información Cambiaria:</div>
+            <div>
+                Operación en <strong>{{ asiento.currency }}</strong> 
+                <span class="badge-moneda">TC: {{ asiento.exchange_rate }}</span>
+            </div>
+        {% endif %}
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 15%;">Código</th>
+                <th>Cuenta</th>
+                
+                {% if asiento.currency and asiento.currency != 'UYU' %}
+                    <th class="num">Importe Orig.</th>
+                {% endif %}
+                
+                <th class="num" style="width: 15%;">Debe (UYU)</th>
+                <th class="num" style="width: 15%;">Haber (UYU)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for m in movs %}
+            <tr>
+                <td>{{ m.codigo }}</td>
+                <td>{{ m.nombre }}</td>
+                
+                {% if asiento.currency and asiento.currency != 'UYU' %}
+                    <td class="num" style="color: #666; font-size: 0.9em;">
+                        {% if m.debe_org > 0 %}
+                            {{ m.debe_org | formato_contable }}
+                        {% elif m.haber_org > 0 %}
+                            {{ m.haber_org | formato_contable }}
+                        {% else %}
+                            -
+                        {% endif %}
+                        <span style="font-size:0.7em;">{{ asiento.currency }}</span>
+                    </td>
+                {% endif %}
+                
+                <td class="num">{% if m.debe > 0 %}{{ m.debe | formato_contable }}{% endif %}</td>
+                <td class="num">{% if m.haber > 0 %}{{ m.haber | formato_contable }}{% endif %}</td>
+            </tr>
+            {% endfor %}
+            
+            <tr class="total-row">
+                <td colspan="{{ '3' if asiento.currency and asiento.currency != 'UYU' else '2' }}" style="text-align: right; padding-right: 20px;">TOTALES</td>
+                <td class="num">{{ total_debe | formato_contable }}</td>
+                <td class="num">{{ total_haber | formato_contable }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="firmas">
+        <div class="firma-box">Realizado por</div>
+        <div class="firma-box">Aprobado por</div>
+    </div>
+
+</body>
+</html>

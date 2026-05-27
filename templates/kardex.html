@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/kardex.css') }}">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<div class="kardex-container">
+    
+    <div class="kardex-header">
+        <div>
+            <h4 style="margin:0; color:#7f8c8d;">FICHA DE EXISTENCIAS</h4>
+            <h1 style="margin:0; color:#2c3e50;">{{ producto.nombre }} <span style="font-size:0.5em; color:#999;">{{ producto.codigo }}</span></h1>
+        </div>
+        
+        <div class="selector-criterio">
+            <span>Criterio de Valoración:</span>
+            <div class="btn-group">
+                <a href="?metodo=PMP" class="btn-criterio {{ 'active' if metodo_actual == 'PMP' }}">PMP</a>
+                <a href="?metodo=FIFO" class="btn-criterio {{ 'active' if metodo_actual == 'FIFO' }}">FIFO</a>
+                <a href="?metodo=LIFO" class="btn-criterio {{ 'active' if metodo_actual == 'LIFO' }}">LIFO</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="tabla-wrapper">
+        <table class="tabla-kardex">
+            <thead>
+                <tr class="divisiones">
+                    <th colspan="2" class="div-general">GENERAL</th>
+                    <th colspan="3" class="div-entradas">ENTRADAS</th>
+                    <th colspan="3" class="div-salidas">SALIDAS</th>
+                    <th colspan="3" class="div-saldos">SALDOS</th>
+                    <th class="div-acciones" style="background: #95a5a6; width: 60px;"></th> </tr>
+                <tr class="columnas">
+                    <th>Fecha</th>
+                    <th>Concepto</th>
+                    <th>Cant.</th><th>C.U.</th><th>C.T.</th>
+                    <th>Cant.</th><th>C.U.</th><th>C.T.</th>
+                    <th>Cant.</th><th>C.U.</th><th>C.T.</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if not filas %}
+                <tr><td colspan="12" class="text-center" style="padding: 20px; color: #aaa;">Sin movimientos registrados</td></tr>
+                {% endif %}
+
+                {% for f in filas %}
+                <tr>
+                    <td class="text-center">{{ f.fecha }}</td>
+                    <td>{{ f.concepto }}</td>
+                    
+                    <td class="text-right bg-ent">{{ f.ent_cant | formato_kardex }}</td>
+                    <td class="text-right bg-ent">{{ f.ent_cu | formato_contable }}</td>
+                    <td class="text-right bg-ent fw-bold">{{ f.ent_ct | formato_contable }}</td>
+                    
+                    <td class="text-right bg-sal">{{ f.sal_cant | formato_kardex }}</td>
+                    <td class="text-right bg-sal">{{ f.sal_cu | formato_contable }}</td>
+                    <td class="text-right bg-sal fw-bold">{{ f.sal_ct | formato_contable }}</td>
+                    
+                    <td class="text-right bg-saldo fw-bold">{{ f.saldo_cant | formato_kardex }}</td>
+                    <td class="text-right bg-saldo">{{ f.saldo_cu | formato_contable }}</td>
+                    <td class="text-right bg-saldo fw-bold">{{ f.saldo_ct | formato_contable }}</td>
+
+                    <td class="text-center">
+                        <button onclick="confirmarBorrarMovimiento('{{ f.id }}', '{{ f.concepto }}')" class="btn-borrar-mov" title="Eliminar movimiento">
+                            🗑️
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="form-movimiento">
+        <h3>Registrar Movimiento Manual</h3>
+        
+        <form action="/agregar_movimiento_stock" method="POST" class="form-grid">
+            <input type="hidden" name="id_producto" value="{{ producto.id }}">
+            
+            <div class="campo">
+                <label>1. Fecha</label>
+                <input type="date" id="inputFecha" name="fecha" required tabindex="1">
+            </div>
+
+            <div class="campo">
+                <label>2. Tipo</label>
+                <select name="tipo" id="selectTipo" required tabindex="2">
+                    <option value="ENTRADA">ENTRADA (Compra)</option>
+                    <option value="SALIDA">SALIDA (Venta)</option>
+                </select>
+            </div>
+
+            <div class="campo" style="flex-grow: 2;">
+                <label>3. Concepto</label>
+                <input list="conceptos-sugeridos" name="concepto" placeholder="Escribe o selecciona..." required tabindex="3" style="width: 100%;">
+                <datalist id="conceptos-sugeridos">
+                    <option value="Saldo Inicial">
+                    <option value="Compra">
+                    <option value="Venta">
+                    <option value="Dev. s/Compra">
+                    <option value="Dev. s/Venta">
+                    <option value="Recuento Físico">
+                </datalist>
+            </div>
+            
+            <div class="campo">
+                <label>4. Cantidad</label>
+                <input type="number" name="cantidad" step="0.01" required placeholder="0" tabindex="4">
+            </div>
+
+            <div class="campo">
+                <label>5. Costo Unit.</label>
+                <input type="number" id="inputCosto" name="costo" step="0.01" placeholder="$" tabindex="5">
+            </div>
+            
+            <div class="campo">
+                <label>&nbsp;</label>
+                <button type="submit" class="btn-registrar" tabindex="6">Registrar (Enter)</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function confirmarBorrarMovimiento(id, concepto) {
+        Swal.fire({
+            title: '¿Borrar este movimiento?',
+            text: "Se eliminará: " + concepto + ". El stock se recalculará automáticamente.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Sí, borrar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = '/borrar_movimiento/' + id;
+            }
+        })
+    }
+</script>
+
+<style>
+    .form-grid { display: flex; gap: 15px; align-items: flex-end; }
+    .campo { display: flex; flex-direction: column; }
+    .campo input, .campo select { padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 1em; }
+    
+    .btn-borrar-mov {
+        background: none; border: none; cursor: pointer; 
+        font-size: 1.1em; opacity: 0.5; transition: 0.2s;
+    }
+    .btn-borrar-mov:hover { opacity: 1; transform: scale(1.2); color: #c0392b; }
+</style>
+
+<script src="{{ url_for('static', filename='js/kardex.js') }}"></script>
+
+{% endblock %}

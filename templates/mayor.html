@@ -1,0 +1,201 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/mayor.css') }}">
+
+    <h1 class="text-center" style="margin-bottom: 30px;">Libro Mayor</h1>
+
+    <div class="mayor-container">
+        
+        <div class="sidebar-cuentas">
+            <div class="search-container-sidebar">
+                <input type="text" id="buscadorMayor" placeholder="🔍 Buscar cuenta..." class="search-box-sidebar" onkeyup="filtrarCuentasMayor()">
+            </div>
+            {% for tipo_deseado in orden_tipos %}
+                {% set cuentas_del_grupo = [] %}
+                {% for c in cuentas %}
+                    {% if c.tipo == tipo_deseado %}
+                        {% set _ = cuentas_del_grupo.append(c) %}
+                    {% endif %}
+                {% endfor %}
+
+                {% if cuentas_del_grupo %}
+                    <div class="grupo-titulo">{{ tipo_deseado }}</div>
+                    {% for c in cuentas_del_grupo %}
+                        <a href="/mayor?cuenta_id={{ c.id }}&modo={{ modo_vista }}" class="{{ 'active' if c.id == cuenta_seleccionada_id else '' }}">
+                            {{ c.nombre }}
+                        </a>
+                    {% endfor %}
+                {% endif %}
+            {% endfor %}
+        </div>
+
+        <div class="area-contenido">
+            {% if cuenta_actual %}
+                
+                <div class="encabezado-cuenta">
+                    <div>
+                        <h2 style="display:inline-block; margin-right: 10px;">{{ cuenta_actual.nombre }}</h2>
+                        <span class="badge-codigo">{{ cuenta_actual.codigo }}</span>
+                    </div>
+
+                    <div class="switch-vistas">
+                        <a href="/mayor?cuenta_id={{ cuenta_actual.id }}&modo=lista" class="btn-vista {{ 'active' if modo_vista == 'lista' else '' }}" title="Ver detalle cronológico">
+                            📄 Mayor completo
+                        </a>
+                        <a href="/mayor?cuenta_id={{ cuenta_actual.id }}&modo=t" class="btn-vista {{ 'active' if modo_vista == 't' else '' }}" title="Ver esquema de totales">
+                            ⚖️ Cuenta T
+                        </a>
+                    </div>
+                </div>
+                
+                {% if modo_vista == 'lista' %}
+                    
+                    <table class="tabla-mayor">
+                        <thead>
+                            <tr>
+                                <th class="col-fecha">Fecha</th>
+                                <th class="col-concepto">Concepto</th>
+                                <th class="col-monto">Debe</th>
+                                <th class="col-monto">Haber</th>
+                                <th class="col-monto">Saldo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for mov in movimientos %}
+                            <tr>
+                                <td class="col-fecha">{{ mov.fecha }}</td>
+                                <td class="col-concepto">
+                                    <span style="font-weight: bold;">#{{ mov.asiento_id }}</span><br>
+                                    <span style="font-style: italic; font-size: 0.9em; color: #777;">{{ mov.leyenda }}</span>
+                                </td>
+                                
+                                <td class="col-monto bg-debe">
+                                    {% if mov.debe > 0 %}
+                                        {{ mov.debe | formato_contable }}
+                                        {% if mov.currency and mov.currency != 'UYU' and mov.debe_org > 0 %}
+                                            <span class="monto-secundario">
+                                                {{ mov.currency }} {{ mov.debe_org | formato_contable }}
+                                            </span>
+                                        {% endif %}
+                                    {% endif %}
+                                </td>
+                                
+                                <td class="col-monto bg-haber">
+                                    {% if mov.haber > 0 %}
+                                        {{ mov.haber | formato_contable }}
+                                        {% if mov.currency and mov.currency != 'UYU' and mov.haber_org > 0 %}
+                                            <span class="monto-secundario">
+                                                {{ mov.currency }} {{ mov.haber_org | formato_contable }}
+                                            </span>
+                                        {% endif %}
+                                    {% endif %}
+                                </td>
+                                
+                                <td class="col-monto bg-saldo">
+                                    {{ mov.saldo | formato_contable }}
+                                    <span style="font-size: 0.7em; color: #999;">{{ 'S.D' if es_cuenta_deudora else 'S.A' }}</span>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="5" class="estado-vacio">Sin movimientos.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                {% else %}
+
+                    <div class="contenedor-t">
+                        
+                        <div class="cabecera-t">
+                            <div class="titulo-columna debe">DEBE</div>
+                            <div class="titulo-columna haber">HABER</div>
+                        </div>
+
+                        <div class="cuerpo-t">
+                            {% for mov in movimientos %}
+                                <div class="fila-t">
+                                    
+                                    <div class="celda-t izq">
+                                        {% if mov.debe > 0 %}
+                                            <span class="ref-asiento">#{{ mov.asiento_id }}</span>
+                                            
+                                            <div>
+                                                <span>{{ mov.debe | formato_contable }}</span>
+                                                {% if mov.currency and mov.currency != 'UYU' and mov.debe_org > 0 %}
+                                                    <span class="monto-secundario">
+                                                        {{ mov.currency }} {{ mov.debe_org | formato_contable }}
+                                                    </span>
+                                                {% endif %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="celda-t der">
+                                        {% if mov.haber > 0 %}
+                                            <div style="text-align: left;">
+                                                <span>{{ mov.haber | formato_contable }}</span>
+                                                {% if mov.currency and mov.currency != 'UYU' and mov.haber_org > 0 %}
+                                                    <span class="monto-secundario">
+                                                        {{ mov.currency }} {{ mov.haber_org | formato_contable }}
+                                                    </span>
+                                                {% endif %}
+                                            </div>
+                                            
+                                            <span class="ref-asiento">#{{ mov.asiento_id }}</span>
+                                        {% endif %}
+                                    </div>
+
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="fila-total">
+                            <div class="total-box izq">{{ total_debe | formato_contable }}</div>
+                            <div class="total-box der">{{ total_haber | formato_contable }}</div>
+                        </div>
+
+                        <div class="saldo-final-box {{ 'saldo-deudor' if es_cuenta_deudora else 'saldo-acreedor' }}">
+                            Saldo {{ 'Deudor' if es_cuenta_deudora else 'Acreedor' }}: 
+                            <span>{{ saldo_final | formato_contable }}</span>
+                        </div>
+                    </div>
+
+                {% endif %}
+            
+            {% else %}
+                <div class="estado-vacio" style="text-align: center; margin-top: 50px; color: #7f8c8d;">
+                    <h3>⬅ Selecciona una cuenta</h3>
+                    <p>Elige una cuenta del menú lateral para auditar sus saldos.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    <script>
+        function filtrarCuentasMayor() {
+            const input = document.getElementById('buscadorMayor').value.toLowerCase();
+            const sidebar = document.querySelector('.sidebar-cuentas');
+            const grupos = sidebar.querySelectorAll('.grupo-titulo');
+            
+            grupos.forEach(grupo => {
+                let iterador = grupo.nextElementSibling;
+                let hayVisibles = false;
+                
+                // Recorremos los enlaces (<a>) debajo de cada título de grupo
+                while (iterador && iterador.tagName === 'A') {
+                    const texto = iterador.innerText.toLowerCase();
+                    if (texto.includes(input)) {
+                        iterador.style.display = '';
+                        hayVisibles = true;
+                    } else {
+                        iterador.style.display = 'none';
+                    }
+                    iterador = iterador.nextElementSibling;
+                }
+                
+                // Si ninguna cuenta de este grupo coincide, ocultamos también el título (Ej: "PASIVO")
+                grupo.style.display = hayVisibles ? '' : 'none';
+            });
+        }
+    </script>
+{% endblock %}

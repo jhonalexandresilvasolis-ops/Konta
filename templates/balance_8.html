@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    /* Estilos específicos para esta hoja ancha */
+    .contenedor-hoja {
+        max-width: 100%;
+        overflow-x: auto;
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    }
+    
+    .tabla-8-col {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85em; /* Letra un poco más chica para que quepa */
+        font-family: 'Segoe UI', sans-serif;
+    }
+
+    .tabla-8-col th {
+        background-color: #2c3e50;
+        color: white;
+        padding: 8px 5px;
+        border: 1px solid #34495e;
+        text-align: center;
+    }
+    
+    .th-grupo {
+        background-color: #34495e; /* Un tono más claro para el grupo superior */
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .tabla-8-col td {
+        border: 1px solid #eee;
+        padding: 5px 8px;
+        color: #333;
+    }
+
+    .td-num {
+        text-align: right;
+        font-family: 'Courier New', monospace;
+        font-weight: 600;
+        width: 10%;
+    }
+
+    .tr-ajuste td {
+        background-color: #e8f6f3; /* Color suave para resaltar el resultado */
+        color: #16a085;
+        font-weight: bold;
+        border-top: 2px solid #16a085;
+    }
+
+    .tr-totales td {
+        background-color: #2c3e50;
+        color: white;
+        font-weight: bold;
+        border: 1px solid #2c3e50;
+    }
+    
+    /* Alternar colores filas */
+    .tabla-8-col tbody tr:nth-child(even) { background-color: #f9f9f9; }
+    .tabla-8-col tbody tr:hover { background-color: #f0f0f0; }
+
+    @media print {
+        .no-print { display: none; }
+        .contenedor-hoja { box-shadow: none; padding: 0; }
+        .tabla-8-col { font-size: 10px; }
+        body { margin: 0; padding: 0; }
+        @page { size: landscape; margin: 1cm; } /* Forzar horizontal */
+    }
+</style>
+
+<div class="no-print" style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+    <h2 style="margin:0; color: #2c3e50;">📊 Hoja de Trabajo (Balance 8 Columnas)</h2>
+    <div>
+        <a href="/balances" class="btn btn-secondary" style="text-decoration: none; color: #555; font-weight: bold; margin-right: 15px;">⬅ Volver</a>
+        <button onclick="window.print()" style="background: #34495e; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">🖨️ Imprimir Horizontal</button>
+    </div>
+</div>
+
+<div class="contenedor-hoja">
+    <div style="text-align: center; margin-bottom: 15px;">
+        <h3 style="margin:0; text-transform: uppercase;">{{ empresa }}</h3>
+        <p style="margin:0; color:#7f8c8d; font-size: 0.9em;">Balance de Comprobación y Saldos</p>
+    </div>
+
+    <table class="tabla-8-col">
+        <thead>
+            <tr>
+                <th colspan="2" class="th-grupo">CUENTAS</th>
+                <th colspan="2" class="th-grupo" style="background:#e67e22;">SUMAS</th>
+                <th colspan="2" class="th-grupo" style="background:#f1c40f; color:#333;">SALDOS</th>
+                <th colspan="2" class="th-grupo" style="background:#3498db;">INVENTARIO</th>
+                <th colspan="2" class="th-grupo" style="background:#e74c3c;">RESULTADOS</th>
+            </tr>
+            <tr>
+                <th style="width: 10%;">CÓDIGO</th>  
+                <th style="width: 18%;">NOMBRE</th>  
+               
+                
+                <th style="background:#d35400;">DEBE</th>
+                <th style="background:#d35400;">HABER</th>
+                
+                <th style="background:#f39c12;">DEUDOR</th>
+                <th style="background:#f39c12;">ACREEDOR</th>
+                
+                <th style="background:#2980b9;">ACTIVO</th>
+                <th style="background:#2980b9;">PASIVO + PN</th>
+                
+                <th style="background:#c0392b;">PÉRDIDA</th>
+                <th style="background:#c0392b;">GANANCIA</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for l in lineas %}
+            <tr>
+                <td style="text-align: center;">{{ l.codigo }}</td>
+                <td>{{ l.nombre }}</td>
+                
+                <td class="td-num">{{ l.sum_debe | formato_contable if l.sum_debe > 0 }}</td>
+                <td class="td-num">{{ l.sum_haber | formato_contable if l.sum_haber > 0 }}</td>
+                
+                <td class="td-num" style="background:#fffcf5;">{{ l.sal_deudor | formato_contable if l.sal_deudor > 0 }}</td>
+                <td class="td-num" style="background:#fffcf5;">{{ l.sal_acreedor | formato_contable if l.sal_acreedor > 0 }}</td>
+                
+                <td class="td-num">{{ l.inv_activo | formato_contable if l.inv_activo > 0 }}</td>
+                <td class="td-num">{{ l.inv_pasivo | formato_contable if l.inv_pasivo > 0 }}</td>
+                
+                <td class="td-num">{{ l.res_perdida | formato_contable if l.res_perdida > 0 }}</td>
+                <td class="td-num">{{ l.res_ganancia | formato_contable if l.res_ganancia > 0 }}</td>
+            </tr>
+            {% endfor %}
+
+            <tr style="background-color: #ecf0f1; font-weight: bold; border-top: 2px solid #999;">
+                <td colspan="2" style="text-align: right; padding-right: 15px;">TOTALES PARCIALES:</td>
+                
+                <td class="td-num">{{ finales.sum_debe | formato_contable }}</td>
+                <td class="td-num">{{ finales.sum_haber | formato_contable }}</td>
+                
+                <td class="td-num">{{ finales.sal_deudor | formato_contable }}</td>
+                <td class="td-num">{{ finales.sal_acreedor | formato_contable }}</td>
+                
+                <td class="td-num">{{ parciales.inv_activo | formato_contable }}</td>
+                <td class="td-num">{{ parciales.inv_pasivo | formato_contable }}</td>
+                
+                <td class="td-num">{{ parciales.res_perdida | formato_contable }}</td>
+                <td class="td-num">{{ parciales.res_ganancia | formato_contable }}</td>
+            </tr>
+
+            <tr class="tr-ajuste">
+                <td colspan="2" style="text-align: right; padding-right: 15px; font-size: 1.1em;">
+                    {{ ajuste.nombre }}
+                </td>
+                <td></td> <td></td> <td></td> <td></td> <td class="td-num">{{ ajuste.inv_activo | formato_contable if ajuste.inv_activo > 0 }}</td>
+                <td class="td-num">{{ ajuste.inv_pasivo | formato_contable if ajuste.inv_pasivo > 0 }}</td>
+                
+                <td class="td-num">{{ ajuste.res_perdida | formato_contable if ajuste.res_perdida > 0 }}</td>
+                <td class="td-num">{{ ajuste.res_ganancia | formato_contable if ajuste.res_ganancia > 0 }}</td>
+            </tr>
+        </tbody>
+        
+        <tfoot>
+            <tr class="tr-totales">
+                <td colspan="2" style="text-align: right; padding-right: 15px;">TOTALES IGUALES:</td>
+                
+                <td class="td-num">{{ finales.sum_debe | formato_contable }}</td>
+                <td class="td-num">{{ finales.sum_haber | formato_contable }}</td>
+                
+                <td class="td-num">{{ finales.sal_deudor | formato_contable }}</td>
+                <td class="td-num">{{ finales.sal_acreedor | formato_contable }}</td>
+                
+                <td class="td-num">{{ finales.inv_activo | formato_contable }}</td>
+                <td class="td-num">{{ finales.inv_pasivo | formato_contable }}</td>
+                
+                <td class="td-num">{{ finales.res_perdida | formato_contable }}</td>
+                <td class="td-num">{{ finales.res_ganancia | formato_contable }}</td>
+            </tr>
+        </tfoot>
+    </table>
+    
+    <div style="margin-top: 20px; font-size: 0.9em; color: #666; font-style: italic;">
+        * La fila "Resultado del Ejercicio" realiza el ajuste necesario para balancear las columnas de Inventario y Resultados, verificando la partida doble final.
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+
+<div class="dashboard-header">
+    <div>
+        <h1>{{ empresa }}</h1>
+        <p class="fecha-hoy">Tablero de Control</p>
+    </div>
+    <a href="/cerrar_sesion" class="btn-salir">Cerrar Empresa 🔒</a>
+</div>
+
+<div class="kpi-grid">
+    <div class="kpi-card morado">
+        <div class="icono">🛡️</div>
+        <div class="info">
+            <h3>Solvencia Real</h3>
+            <p>Disp. menos Pasivos Totales</p>
+            <div class="valor" style="color: {{ '#8e44ad' if liquidez_neta >= 0 else '#c0392b' }}">
+                {{ liquidez_neta | formato_contable }}
+            </div>
+        </div>
+    </div>
+
+    <a href="/mayor?cuenta_id=1" style="text-decoration: none;"> <div class="kpi-card azul">
+            <div class="icono">💰</div>
+            <div class="info">
+                <h3>Disponibilidades</h3>
+                <p>Caja + Bancos (1.1.1)</p>
+                <div class="valor">{{ disp | formato_contable }}</div>
+            </div>
+        </div>
+    </a>
+
+    <a href="/balances" style="text-decoration: none;">
+        <div class="kpi-card verde">
+            <div class="icono">📈</div>
+            <div class="info">
+                <h3>Ventas del Mes</h3>
+                <p>Ingresos Operativos</p>
+                <div class="valor">{{ ventas | formato_contable }}</div>
+            </div>
+        </div>
+    </a>
+
+    <a href="/balances" style="text-decoration: none;">
+        <div class="kpi-card rojo">
+            <div class="icono">📉</div>
+            <div class="info">
+                <h3>Gastos del Mes</h3>
+                <p>Egresos Operativos</p>
+                <div class="valor">{{ gastos | formato_contable }}</div>
+            </div>
+        </div>
+    </a>
+
+    <a href="/balances#seccion-dif-cambio" style="text-decoration: none;">
+        <div class="kpi-card" style="border-left: 5px solid {{ '#27ae60' if dif_cambio >= 0 else '#c0392b' }};">
+            <div class="icono" style="color: #e67e22;">💱</div>
+            <div class="info">
+                <h3>Dif. de Cambio</h3>
+                <p>Resultado Neto (4.1.2 vs 5.1.4)</p>
+                <div class="valor" style="color: {{ '#27ae60' if dif_cambio >= 0 else '#c0392b' }}">
+                    {{ dif_cambio | formato_contable }}
+                </div>
+            </div>
+        </div>
+    </a>
+</div>
+
+<h2 class="section-title">Accesos Directos</h2>
+<div class="accesos-grid">
+
+    <a href="/diario" class="acceso-card">
+        <div class="acceso-icono">📘</div>
+        <h3>Libro Diario</h3>
+        <p>Registrar asientos y operaciones.</p>
+    </a>
+
+    <a href="/mayor" class="acceso-card">
+        <div class="acceso-icono">📚</div>
+        <h3>Libro Mayor</h3>
+        <p>Consultar saldos y esquemas T.</p>
+    </a>
+
+    <a href="/balances" class="acceso-card">
+        <div class="acceso-icono">⚖️</div>
+        <h3>Estados Financieros</h3>
+        <p>Situación Patrimonial y Resultados.</p>
+    </a>
+
+    <a href="/productos" class="acceso-card">
+        <div class="acceso-icono">📦</div>
+        <h3>Stock / Inventario</h3>
+        <p>Catálogo, Costos y Kardex.</p>
+    </a>
+    <a href="/cuentas" class="acceso-card">
+        <div class="acceso-icono">🗂️</div>
+        <h3>Plan de Cuentas</h3>
+        <p>Crear, editar o eliminar cuentas.</p>
+    </a>
+    <a href="/conciliacion" class="acceso-card">
+        <div class="acceso-icono">🏦</div>
+        <h3>Conciliación Bancaria</h3>
+        <p>Comparación entre tu contabilidad y la del banco.</p>
+    </a>
+</div>
+{% endblock %}

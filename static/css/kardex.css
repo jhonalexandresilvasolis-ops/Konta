@@ -1,0 +1,46 @@
+.kardex-container { max-width: 1200px; margin: 0 auto; padding-bottom: 50px; }
+
+.kardex-header {
+    display: flex; justify-content: space-between; align-items: flex-end;
+    margin-bottom: 25px; border-bottom: 2px solid #2c3e50; padding-bottom: 15px;
+}
+
+/* SELECTOR DE CRITERIO */
+.selector-criterio span { font-weight: bold; margin-right: 10px; color: #555; }
+.btn-group { display: inline-flex; background: #eee; border-radius: 6px; padding: 3px; }
+.btn-criterio {
+    text-decoration: none; padding: 5px 15px; color: #555; font-size: 0.9em; border-radius: 4px;
+}
+.btn-criterio.active { background: #2c3e50; color: white; font-weight: bold; }
+
+/* TABLA */
+.tabla-wrapper { overflow-x: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+.tabla-kardex { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+
+/* ENCABEZADOS */
+.divisiones th { padding: 8px; color: white; letter-spacing: 1px; font-size: 0.8em; border-right: 1px solid rgba(255,255,255,0.2); }
+.div-general { background: #7f8c8d; }
+.div-entradas { background: #27ae60; }
+.div-salidas { background: #c0392b; }
+.div-saldos { background: #2c3e50; }
+
+.columnas th { background: #f8f9fa; padding: 10px; border-bottom: 2px solid #ddd; font-size: 0.85em; color: #555; }
+
+/* CELDAS */
+.tabla-kardex td { padding: 8px 10px; border-bottom: 1px solid #eee; vertical-align: middle; }
+
+/* Colores de fondo suaves para columnas */
+.bg-ent { background-color: #f0fff4; color: #1e8449; }
+.bg-sal { background-color: #fff5f5; color: #c0392b; }
+.bg-saldo { background-color: #f4f6f7; color: #2c3e50; }
+
+.fw-bold { font-weight: bold; }
+.text-right { text-align: right; font-family: 'Courier New', monospace; }
+.text-center { text-align: center; }
+
+/* FORMULARIO INFERIOR */
+.form-movimiento { margin-top: 30px; background: #fdfdfd; padding: 20px; border: 1px solid #eee; border-radius: 8px; }
+.form-movimiento label { display: block; font-size: 0.8em; font-weight: bold; color: #7f8c8d; margin-bottom: 5px; }
+.form-movimiento input, .form-movimiento select { padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+.btn-registrar { background: #3498db; color: white; border: none; padding: 9px 20px; border-radius: 4px; font-weight: bold; cursor: pointer; }
+.btn-registrar:hover { background: #2980b9; }

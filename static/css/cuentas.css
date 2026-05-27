@@ -1,0 +1,106 @@
+/* static/css/cuentas.css */
+
+.cuentas-container { max-width: 900px; margin: 0 auto; padding-bottom: 50px; }
+
+.header-seccion {
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;
+}
+.header-seccion h1 { margin: 0; color: #2c3e50; }
+.header-seccion p { margin: 5px 0 0; color: #7f8c8d; }
+
+.btn-nueva {
+    background: #2c3e50; color: white; border: none; padding: 10px 20px;
+    border-radius: 6px; font-weight: bold; cursor: pointer; transition: background 0.2s;
+    font-size: 1em; display: flex; align-items: center; gap: 8px;
+}
+.btn-nueva:hover { background: #34495e; }
+
+/* TABLA */
+.tabla-card {
+    background: white; border-radius: 8px; overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid #eee;
+}
+
+.tabla-cuentas { width: 100%; border-collapse: collapse; }
+.tabla-cuentas th {
+    background: #f8f9fa; padding: 15px; text-align: left;
+    color: #7f8c8d; font-size: 0.9em; text-transform: uppercase;
+    border-bottom: 2px solid #eee;
+}
+.tabla-cuentas td { padding: 12px 15px; border-bottom: 1px solid #f0f0f0; color: #333; }
+.tabla-cuentas tr:last-child td { border-bottom: none; }
+.tabla-cuentas tr:hover { background: #fafafa; }
+
+/* Badges */
+.badge-codigo { font-family: monospace; font-weight: bold; background: #eee; padding: 4px 8px; border-radius: 4px; color: #555; }
+
+.badge-tipo { padding: 4px 10px; border-radius: 20px; font-size: 0.8em; font-weight: bold; }
+.badge-tipo.activo { background: #d1e7dd; color: #0f5132; }
+.badge-tipo.pasivo { background: #fff3cd; color: #664d03; }
+.badge-tipo.patrimonio { background: #e2e3e5; color: #41464b; }
+.badge-tipo.ganancia { background: #d1e7dd; color: #0f5132; }
+.badge-tipo.pérdida { background: #f8d7da; color: #842029; }
+
+/* Botones de Acción */
+.acciones { display: flex; gap: 10px; }
+.btn-icon {
+    border: none; background: none; cursor: pointer; font-size: 1.1em;
+    padding: 5px; border-radius: 4px; transition: background 0.2s;
+}
+.btn-icon:hover { background: #eee; }
+.btn-icon.borrar:hover { background: #fee; color: #c0392b; }
+
+/* --- MODAL --- */
+.modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5); z-index: 1000;
+    display: none; justify-content: center; align-items: center;
+}
+
+.modal-content {
+    background: white; width: 400px; padding: 30px; border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2); animation: slideDown 0.3s ease;
+}
+@keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.modal-header h2 { margin: 0; font-size: 1.5em; color: #2c3e50; }
+.close-btn { font-size: 2em; cursor: pointer; color: #aaa; }
+.close-btn:hover { color: #333; }
+
+.form-group { margin-bottom: 15px; }
+.form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9em; color: #555; }
+.form-group input, .form-group select {
+    width: 100%; padding: 10px; border: 2px solid #eee; border-radius: 6px; box-sizing: border-box; font-size: 1em;
+}
+.form-group input:focus, .form-group select:focus { border-color: #3498db; outline: none; }
+.form-group small { display: block; margin-top: 5px; color: #999; font-size: 0.8em; }
+
+.modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 25px; }
+.btn-cancelar { background: #eee; color: #555; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+.btn-guardar { background: #2c3e50; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+.btn-guardar:hover { background: #27ae60; }
+
+/* --- AGREGAR AL FINAL DE cuentas.css --- */
+
+/* Estilos para el buscador que faltaban */
+.search-box {
+    padding: 10px 15px;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    width: 250px;
+    outline: none;
+    transition: box-shadow 0.2s;
+    font-size: 0.9em;
+}
+.search-box:focus {
+    box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
+    border-color: #3498db;
+}
+
+/* Alineación de herramientas superiores */
+.herramientas-top {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}

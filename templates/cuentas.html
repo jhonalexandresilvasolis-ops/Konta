@@ -1,0 +1,284 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/cuentas.css') }}">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<div class="cuentas-container">
+
+    <div class="header-seccion">
+        <div>
+            <h1>🗂️ Plan de Cuentas</h1>
+            <p class="subtitulo">Gestión de la estructura contable.</p>
+        </div>
+        <div class="herramientas-top">
+            <input type="text" id="buscador" class="search-box" placeholder="🔍 Buscar cuenta..."
+                onkeyup="filtrarTabla()">
+            <button class="btn-nueva" onclick="abrirModal()">
+                ➕ Nueva Cuenta
+            </button>
+        </div>
+    </div>
+
+    <div class="tabla-card">
+        <table class="tabla-cuentas" id="tablaCuentas">
+            <thead>
+                <tr>
+                    <th width="15%">Código</th>
+                    <th>Nombre de la Cuenta</th>
+                    <th width="15%">Tipo / Rubro</th>
+                    <th width="15%" style="text-align: right;">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in cuentas %}
+                <tr>
+                    <td><span class="badge-codigo">{{ c.codigo }}</span></td>
+                    <td
+                        style="font-weight: 600; color: #2c3e50; display: flex; align-items: center; justify-content: space-between;">
+                        <span>{{ c.nombre }}</span>
+                        <button
+                            onclick="verInfoCuenta('{{ c.nombre }}', '{{ c.descripcion | replace('\n', ' ') | escape }}')"
+                            style="background: none; border: none; cursor: pointer; color: #3498db; font-size: 1.2em; transition: transform 0.2s;"
+                            title="Ver definición">
+                            ❔
+                        </button>
+                    </td>
+                    <td>
+                        <span class="badge-tipo {{ c.tipo|lower }}">{{ c.tipo }}</span>
+                    </td>
+                    <td class="acciones">
+                        {% set desc_limpia = c.descripcion | replace('\n', ' ') | escape %}
+                            <button onclick="editarCuenta('{{ c.id }}', '{{ c.codigo }}', '{{ c.nombre }}', '{{ c.tipo }}', '{{ desc_limpia }}')"
+                                class="btn-icon editar" title="Editar">
+                                ✏️
+                            </button>
+                        <button onclick="confirmarBorrarCuenta('{{ c.id }}', '{{ c.nombre }}')" class="btn-icon borrar"
+                            title="Eliminar">
+                            🗑️
+                        </button>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" class="vacio">No hay cuentas registradas.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="modalCuenta" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modalTitulo" style="margin:0;">Nueva Cuenta</h2>
+            <span class="close-btn" onclick="cerrarModal()">&times;</span>
+        </div>
+
+        <form action="/guardar_cuenta" method="POST">
+            <input type="hidden" id="inputId" name="id_cuenta">
+
+            <div class="form-group">
+                <label>Tipo (Naturaleza)</label>
+                <select id="selectTipo" name="tipo" class="form-input" required onchange="actualizarGuia()">
+                    <option value="Activo">Activo</option>
+                    <option value="Pasivo">Pasivo</option>
+                    <option value="Patrimonio">Patrimonio</option>
+                    <option value="Ganancia">Ganancia</option>
+                    <option value="Pérdida">Pérdida</option>
+                </select>
+            </div>
+
+            <div id="guia-codigos"
+                style="background: #e8f6ff; border-left: 4px solid #3498db; padding: 10px; margin-bottom: 15px; border-radius: 4px; font-size: 0.85em; color: #2c3e50;">
+            </div>
+
+            <div class="form-group">
+                <label>Código Jerárquico</label>
+                <input type="text" id="inputCodigo" name="codigo" class="form-input" placeholder="Ej: 1.1.01" required
+                    autocomplete="off">
+            </div>
+
+            <div class="form-group">
+                <label>Nombre de la Cuenta</label>
+                <input type="text" id="inputNombre" name="nombre" class="form-input" placeholder="Ej: Banco Santander"
+                    required autocomplete="off">
+                <div class="form-group">
+                    <label>Descripción / Manual de Uso de la cuenta</label>
+                    <textarea id="inputDescripcion" name="descripcion" class="form-input" rows="3"
+                        placeholder="Ej: Se utiliza para registrar las deudas de los clientes por ventas a crédito..."
+                        required></textarea>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-cancelar" onclick="cerrarModal()">Cancelar</button>
+                <button type="submit" class="btn-guardar-modal">Guardar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    const modal = document.getElementById('modalCuenta');
+    const titulo = document.getElementById('modalTitulo');
+    const inputId = document.getElementById('inputId');
+    const inputCodigo = document.getElementById('inputCodigo');
+    const inputNombre = document.getElementById('inputNombre');
+    const selectTipo = document.getElementById('selectTipo');
+    const guiaDiv = document.getElementById('guia-codigos');
+
+    // ========================================================================
+    // DICCIONARIO DE REGLAS "CLASE MUNDIAL" (4 NIVELES)
+    // ========================================================================
+    const reglas = {
+        'Activo': `
+            <div style="font-size:0.9em; line-height:1.5;">
+                <strong>Clase 1: ACTIVO (Jerarquía 1.Cap.Rub.Cta)</strong><br>
+                <span style="color:#2980b9;">1.1.1.xx</span> : Disponibilidades (Caja, Banco)<br>
+                <span style="color:#2980b9;">1.1.2.xx</span> : Créditos por Ventas (Deudores)<br>
+                <span style="color:#2980b9;">1.1.3.xx</span> : Créditos Diversos (Fiscales)<br>
+                <span style="color:#2980b9;">1.1.4.xx</span> : Bienes de Cambio (Mercaderías)<br>
+                <span style="color:#8e44ad;">1.2.1.xx</span> : Bienes de Uso (Activo No Corriente)
+            </div>
+        `,
+        'Pasivo': `
+            <div style="font-size:0.9em; line-height:1.5;">
+                <strong>Clase 2: PASIVO (Jerarquía 2.Cap.Rub.Cta)</strong><br>
+                <span style="color:#c0392b;">2.1.1.xx</span> : Deudas Comerciales (Proveedores)<br>
+                <span style="color:#c0392b;">2.1.2.xx</span> : Deudas Financieras (Préstamos)<br>
+                <span style="color:#c0392b;">2.1.3.xx</span> : <strong>Deudas Sociales y Fiscales</strong> (BPS, DGI, Sueldos)<br>
+                <span style="color:#d35400;">2.2.x.xx</span> : Pasivo No Corriente (Largo Plazo)
+            </div>
+        `,
+        'Patrimonio': `
+            <div style="font-size:0.9em; line-height:1.5;">
+                <strong>Clase 3: PATRIMONIO NETO</strong><br>
+                <span style="color:#27ae60;">3.1.1.xx</span> : Capital Integrado y Ajustes<br>
+                <span style="color:#27ae60;">3.2.1.xx</span> : Reservas<br>
+                <span style="color:#27ae60;">3.3.1.xx</span> : Resultados Acumulados
+            </div>
+        `,
+        'Ganancia': `
+            <div style="font-size:0.9em; line-height:1.5;">
+                <strong>Clase 4: INGRESOS</strong><br>
+                <span style="color:#16a085;">4.1.1.xx</span> : <strong>Ingresos Operativos</strong> (Ventas Plaza/Exp)<br>
+                <span style="color:#16a085;">4.1.2.xx</span> : Ingresos Financieros (Dif. Cambio, Intereses)
+            </div>
+        `,
+        'Pérdida': `
+            <div style="font-size:0.9em; line-height:1.5;">
+                <strong>Clase 5: EGRESOS</strong><br>
+                <span style="color:#e74c3c;">5.1.1.xx</span> : <strong>Costos Operativos</strong> (Costo Ventas)<br>
+                <span style="color:#e74c3c;">5.1.2.xx</span> : <strong>Gastos de Personal</strong> (Sueldos, Cargas)<br>
+                <span style="color:#e74c3c;">5.1.3.xx</span> : Gastos de Administración y Ventas<br>
+                <span style="color:#e74c3c;">5.1.4.xx</span> : Gastos Financieros
+            </div>
+        `
+    };
+    function verInfoCuenta(nombre, descripcion) {
+        Swal.fire({
+            title: nombre,
+            text: descripcion || "Sin descripción asignada.",
+            icon: 'info',
+            confirmButtonColor: '#2c3e50',
+            confirmButtonText: 'Entendido'
+        });
+    }
+
+    // ========================================================================
+    // LÓGICA DE SUGERENCIA DE CÓDIGOS (NUEVO)
+    // ========================================================================
+    function detectarUltimoCodigo(tipoSeleccionado) {
+        // Mapeo Tipo -> Primer Dígito
+        const prefijos = { 'Activo': '1', 'Pasivo': '2', 'Patrimonio': '3', 'Ganancia': '4', 'Pérdida': '5' };
+        const digito = prefijos[tipoSeleccionado];
+
+        // Obtenemos todos los códigos renderizados en la tabla
+        const codigos = [];
+        document.querySelectorAll('.badge-codigo').forEach(span => {
+            codigos.push(span.innerText.trim());
+        });
+
+        // Filtramos los que empiezan con el dígito del tipo seleccionado
+        const filtrados = codigos.filter(c => c.startsWith(digito));
+
+        if (filtrados.length > 0) {
+            // Ordenamos visualmente (alfanumérico) y tomamos el último
+            filtrados.sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+            const ultimo = filtrados[filtrados.length - 1];
+            return `<div style="margin-top:8px; border-top:1px dashed #ccc; padding-top:4px;">
+                        🔍 Último código registrado en esta clase: <strong>${ultimo}</strong>
+                    </div>`;
+        }
+        return "";
+    }
+
+    function actualizarGuia() {
+        const tipo = selectTipo.value;
+        const infoEstatica = reglas[tipo] || "Ingresa un código jerárquico único.";
+        const infoDinamica = detectarUltimoCodigo(tipo);
+
+        guiaDiv.innerHTML = infoEstatica + infoDinamica;
+    }
+
+    // ========================================================================
+    // FUNCIONES DEL MODAL (ESTÁNDAR)
+    // ========================================================================
+    function filtrarTabla() {
+        const input = document.getElementById('buscador').value.toLowerCase();
+        const trs = document.querySelectorAll('#tablaCuentas tbody tr');
+        trs.forEach(tr => {
+            const texto = tr.innerText.toLowerCase();
+            tr.style.display = texto.includes(input) ? '' : 'none';
+        });
+    }
+
+    function abrirModal() {
+        titulo.innerText = "Nueva Cuenta";
+        inputId.value = "";
+        inputCodigo.value = "";
+        inputNombre.value = "";
+        document.getElementById('inputDescripcion').value = ""; // NUEVO
+        selectTipo.value = "Activo";
+        actualizarGuia();
+        modal.style.display = 'flex';
+    }
+
+    function editarCuenta(id, codigo, nombre, tipo, descripcion) {
+        titulo.innerText = "Editar Cuenta";
+        inputId.value = id;
+        inputCodigo.value = codigo;
+        inputNombre.value = nombre;
+        document.getElementById('inputDescripcion').value = descripcion; // NUEVO
+        selectTipo.value = tipo;
+        actualizarGuia();
+        modal.style.display = 'flex';
+    }
+
+    function cerrarModal() {
+        modal.style.display = 'none';
+    }
+
+    window.onclick = function (event) {
+        if (event.target == modal) cerrarModal();
+    }
+
+    function confirmarBorrarCuenta(id, nombre) {
+        Swal.fire({
+            title: '¿Borrar ' + nombre + '?',
+            text: "No podrás borrarla si ya tiene asientos.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#c0392b',
+            confirmButtonText: 'Sí, borrar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = '/borrar_cuenta/' + id;
+            }
+        })
+    }
+</script>
+{% endblock %}

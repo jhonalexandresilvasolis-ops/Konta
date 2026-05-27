@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="max-width: 1000px; margin: 0 auto; padding-bottom: 80px;">
+
+    <div style="text-align: center; margin-bottom: 30px;">
+        <h1 style="color: #2c3e50;">🔄 Ciclo de Cierre Contable</h1>
+        <p style="color: #7f8c8d;">Gestión de fin de ejercicio en 3 etapas</p>
+    </div>
+
+    <div
+        style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 30px; border: 1px solid #ddd;">
+        <form method="GET" action="/cierre"
+            style="display: flex; gap: 20px; align-items: flex-end; justify-content: center;">
+            <div>
+                <label style="font-weight: bold; color: #555;">Fecha Inicio:</label>
+                <input type="date" name="fecha_inicio" value="{{ f_inicio }}" class="form-control">
+            </div>
+            <div>
+                <label style="font-weight: bold; color: #555;">Fecha Fin (Cierre):</label>
+                <input type="date" name="fecha_fin" value="{{ f_fin }}" required class="form-control">
+            </div>
+            <button type="submit" class="btn btn-primary">🔍 Calcular Saldos</button>
+        </form>
+    </div>
+
+    <div class="card mb-4" style="border-left: 5px solid #f1c40f;">
+        <div class="card-header bg-white">
+            <h4 style="margin:0; color: #f39c12;">1️⃣ Refundición de Resultados</h4>
+        </div>
+        <div class="card-body">
+            <p>Cancela las cuentas de <b>Ganancia y Pérdida</b> contra la cuenta <i>Resultado del Ejercicio</i>.</p>
+
+            {% if cuentas_res %}
+            <div
+                style="max-height: 200px; overflow-y: auto; background: #f9f9f9; padding: 10px; margin-bottom: 15px; border-radius: 4px;">
+                <table class="table table-sm table-borderless mb-0">
+                    {% for c in cuentas_res %}
+                    <tr>
+                        <td>{{ c.codigo }} {{ c.nombre }}</td>
+                        <td
+                            class="text-end fw-bold {{ 'text-success' if (c.total_haber - c.total_debe) > 0 else 'text-danger' }}">
+                            {{ (c.total_haber - c.total_debe) | formato_contable }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+            <div class="alert alert-info">
+                <strong>Resultado Previsto:</strong> {{ neto_refundicion | formato_contable }}
+                ({{ 'GANANCIA' if neto_refundicion > 0 else 'PÉRDIDA' }})
+            </div>
+            <form action="/cierre/refundicion" method="POST">
+                <input type="hidden" name="fecha_inicio" value="{{ f_inicio }}">
+                <input type="hidden" name="fecha_fin" value="{{ f_fin }}">
+                <button class="btn btn-warning w-100 fw-bold">📉 Generar Asiento de Refundición</button>
+            </form>
+            {% else %}
+            <div class="alert alert-success">✅ No hay cuentas de resultado con saldo. La Etapa 1 parece estar completa.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card mb-4" style="border-left: 5px solid #e74c3c;">
+        <div class="card-header bg-white">
+            <h4 style="margin:0; color: #c0392b;">2️⃣ Cierre Patrimonial</h4>
+        </div>
+        <div class="card-body">
+            <p>Cancela <b>Activos, Pasivos y Patrimonio</b> dejando el Libro Diario en CERO.</p>
+
+            {% if cuentas_pat %}
+            <div style="margin-bottom: 15px;">
+                <small class="text-muted">Cuentas Patrimoniales con saldo ({{ cuentas_pat|length }}):</small>
+            </div>
+            <form action="/cierre/patrimonial" method="POST"
+                onsubmit="return confirm('¿Seguro? Esto dejará todas las cuentas en CERO.');">
+                <input type="hidden" name="fecha_fin" value="{{ f_fin }}">
+                <button class="btn btn-danger w-100 fw-bold">📕 Generar Asiento de Cierre Patrimonial</button>
+            </form>
+            {% else %}
+            <div class="alert alert-success">✅ El sistema está en CERO. La Etapa 2 está completa.</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card mb-4" style="border-left: 5px solid #27ae60;">
+        <div class="card-header bg-white">
+            <h4 style="margin:0; color: #27ae60;">3️⃣ Apertura del Nuevo Ejercicio</h4>
+        </div>
+        <div class="card-body">
+            <p>Restaura los saldos para el nuevo ejercicio y mueve el resultado a <i>Resultados Acumulados</i>.</p>
+
+            <form action="/cierre/apertura" method="POST">
+                <input type="hidden" name="fecha_fin" value="{{ f_fin }}">
+
+                <div style="margin-bottom: 15px;">
+                    <label style="font-weight: bold; color: #555; display: block; margin-bottom: 5px;">
+                        📅 Fecha de Inicio del Nuevo Ejercicio:
+                    </label>
+                    <input type="date" name="fecha_apertura" required class="form-control"
+                        style="border: 2px solid #27ae60; font-weight: bold;">
+                    <small class="text-muted">Por lo general es el día siguiente al cierre (ej: 01 de Enero).</small>
+                </div>
+                <button class="btn btn-success w-100 fw-bold">📗 Generar Asiento de Apertura</button>
+            </form>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

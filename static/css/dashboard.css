@@ -1,0 +1,53 @@
+/* static/css/dashboard.css */
+.dashboard-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 40px; border-bottom: 2px solid #eee; padding-bottom: 20px;
+}
+.dashboard-header h1 { margin: 0; color: #2c3e50; }
+.fecha-hoy { color: #7f8c8d; margin: 5px 0 0; }
+
+.btn-salir {
+    text-decoration: none; color: #c0392b; font-weight: bold; border: 2px solid #c0392b;
+    padding: 8px 20px; border-radius: 50px; transition: all 0.2s;
+}
+.btn-salir:hover { background: #c0392b; color: white; }
+
+/* KPIs */
+.kpi-grid { 
+    display: grid; 
+    grid-template-columns: repeat(4, 1fr); /* Antes era 3 */
+    gap: 20px; 
+    margin-bottom: 50px;
+}
+.kpi-card {
+    background: white; padding: 20px; border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #eee;
+    display: flex; align-items: center; gap: 20px;
+}
+.kpi-card.morado .valor { color: #8e44ad; }
+.icono { font-size: 2.5em; background: #f8f9fa; padding: 15px; border-radius: 50%; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; }
+
+.info h3 { margin: 0; font-size: 1.1em; color: #7f8c8d; }
+.info p { margin: 0; font-size: 0.8em; color: #95a5a6; }
+.valor { font-size: 1.8em; font-weight: 800; color: #2c3e50; margin-top: 5px; }
+
+/* Colores KPI */
+.kpi-card.azul .valor { color: #2980b9; }
+.kpi-card.verde .valor { color: #27ae60; }
+.kpi-card.rojo .valor { color: #c0392b; }
+
+/* ACCESOS */
+.section-title { color: #2c3e50; margin-bottom: 20px; }
+.accesos-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+
+.acceso-card {
+    background: white; padding: 30px; border-radius: 12px; text-decoration: none;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #eee; text-align: center;
+    transition: transform 0.2s, border-color 0.2s; color: #333;
+}
+.acceso-card:hover { transform: translateY(-5px); border-color: #3498db; }
+.acceso-icono { font-size: 3em; margin-bottom: 15px; }
+.acceso-card h3 { margin: 0 0 10px; color: #2c3e50; }
+.acceso-card p { margin: 0; font-size: 0.9em; color: #7f8c8d; }
+
+.acceso-card.disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); }

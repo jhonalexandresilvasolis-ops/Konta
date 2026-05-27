@@ -1,0 +1,249 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/balances.css') }}">
+<style>
+    /* Estilos embebidos para asegurar compatibilidad inmediata con la nueva estructura */
+    .rubro-container {
+        margin-bottom: 15px;
+        background: #fff;
+        border: 1px solid rgba(0,0,0,0.05);
+        border-radius: 6px;
+        overflow: hidden;
+    }
+    .rubro-header {
+        background: rgba(0,0,0,0.03);
+        padding: 5px 10px;
+        font-weight: bold;
+        font-size: 0.85em;
+        text-transform: uppercase;
+        color: #555;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+    .rubro-footer {
+        padding: 5px 10px;
+        background: rgba(0,0,0,0.01);
+        border-top: 1px solid rgba(0,0,0,0.05);
+        display: flex;
+        justify-content: space-between;
+        font-weight: bold;
+        font-size: 0.9em;
+    }
+    .rubro-table { width: 100%; border-collapse: collapse; }
+    .rubro-table td { padding: 4px 10px; font-size: 0.9em; border-bottom: 1px solid #f9f9f9; }
+    .rubro-table tr:last-child td { border-bottom: none; }
+</style>
+
+<h1 class="text-center titulo-principal">Informes</h1>
+
+<div class="no-print" style="display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 20px;">
+    <a href="/balance_8" 
+       style="background: #27ae60; color: white; text-decoration: none; padding: 10px 20px; border-radius: 5px; font-weight: bold; display: flex; align-items: center; gap: 5px;">
+        📊 Ver Hoja de Trabajo (8 Col)
+    </a>
+    <button onclick="window.print()"
+        style="background: #34495e; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold;">
+        🖨️ Imprimir
+    </button>
+</div>
+
+<div class="dashboard-container">
+
+    <div class="balance-card">
+        <div class="card-header">
+            <h2>Estado de Resultados</h2>
+            <p>Evolución Económica</p>
+        </div>
+
+        <div class="grid-dos-columnas">
+            <div class="bloque-grupo tema-verde">
+                <h4 class="titulo-grupo">GANANCIAS</h4>
+                <div class="tabla-wrapper">
+                    {% for grupo in ganancias %}
+                    <div class="rubro-container">
+                        <div class="rubro-header">{{ grupo.rubro }}</div>
+                        <table class="rubro-table">
+                            {% for c in grupo.cuentas %}
+                            <tr>
+                                <td>{{ c.nombre }}</td>
+                                <td class="monto">{{ c.saldo | formato_contable }}</td>
+                            </tr>
+                            {% endfor %}
+                        </table>
+                        <div class="rubro-footer">
+                            <span style="color:#27ae60;">Total {{ grupo.rubro }}</span>
+                            <span>{{ grupo.saldo_total | formato_contable }}</span>
+                        </div>
+                    </div>
+                    {% else %}
+                    <p class="text-center" style="color:#999; padding:20px;">- Sin Ingresos -</p>
+                    {% endfor %}
+                </div>
+                <div class="footer-grupo">
+                    <span>TOTAL GANANCIAS</span>
+                    <span>{{ total_ganancias | formato_contable }}</span>
+                </div>
+            </div>
+
+            <div class="bloque-grupo tema-rojo">
+                <h4 class="titulo-grupo">PERDIDAS</h4>
+                <div class="tabla-wrapper">
+                    {% for grupo in perdidas %}
+                    <div class="rubro-container">
+                        <div class="rubro-header">{{ grupo.rubro }}</div>
+                        <table class="rubro-table">
+                            {% for c in grupo.cuentas %}
+                            <tr>
+                                <td>{{ c.nombre }}</td>
+                                <td class="monto">{{ c.saldo | formato_contable }}</td>
+                            </tr>
+                            {% endfor %}
+                        </table>
+                        <div class="rubro-footer">
+                            <span style="color:#c0392b;">Total {{ grupo.rubro }}</span>
+                            <span>{{ grupo.saldo_total | formato_contable }}</span>
+                        </div>
+                    </div>
+                    {% else %}
+                    <p class="text-center" style="color:#999; padding:20px;">- Sin Egresos -</p>
+                    {% endfor %}
+                </div>
+                <div class="footer-grupo">
+                    <span>TOTAL PERDIDAS</span>
+                    <span>{{ total_perdidas | formato_contable }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="resultado-final">
+            <span style="font-size: 1.1em; opacity: 0.9;">RESULTADO DEL EJERCICIO:</span>
+            <span class="resultado-valor {{ 'txt-positivo' if resultado_ejercicio >= 0 else 'txt-negativo' }}">
+                {{ resultado_ejercicio | formato_contable }}
+            </span>
+        </div>
+    </div>
+
+    <div class="balance-card">
+        <div class="card-header">
+            <h2>Situación Patrimonial</h2>
+            <p>Activo = Pasivo + Patrimonio Neto</p>
+        </div>
+
+        <div class="grid-dos-columnas">
+            <div class="columna-financiera">
+                <div class="bloque-grupo tema-verde">
+                    <h3 class="titulo-grupo">ACTIVO</h3>
+                    <div class="tabla-wrapper" style="min-height: 200px;">
+                        {% for grupo in activos %}
+                        <div class="rubro-container">
+                            <div class="rubro-header">{{ grupo.rubro }}</div>
+                            <table class="rubro-table">
+                                {% for c in grupo.cuentas %}
+                                <tr>
+                                    <td>{{ c.nombre }}</td>
+                                    <td class="monto">{{ c.saldo | formato_contable }}</td>
+                                </tr>
+                                {% endfor %}
+                            </table>
+                            <div class="rubro-footer">
+                                <span style="color:#27ae60;">Total {{ grupo.rubro }}</span>
+                                <span>{{ grupo.saldo_total | formato_contable }}</span>
+                            </div>
+                        </div>
+                        {% else %}
+                        <p class="text-center" style="color:#999; padding:20px;">- Sin Activos -</p>
+                        {% endfor %}
+                    </div>
+                    <div class="footer-grupo">
+                        <span>TOTAL ACTIVO</span>
+                        <span>{{ total_activo | formato_contable }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="columna-financiera">
+                <div class="bloque-grupo tema-amarillo">
+                    <h3 class="titulo-grupo">PASIVO</h3>
+                    <div class="tabla-wrapper">
+                        {% for grupo in pasivos %}
+                        <div class="rubro-container">
+                            <div class="rubro-header">{{ grupo.rubro }}</div>
+                            <table class="rubro-table">
+                                {% for c in grupo.cuentas %}
+                                <tr>
+                                    <td>{{ c.nombre }}</td>
+                                    <td class="monto">{{ c.saldo | formato_contable }}</td>
+                                </tr>
+                                {% endfor %}
+                            </table>
+                            <div class="rubro-footer">
+                                <span style="color:#f39c12;">Total {{ grupo.rubro }}</span>
+                                <span>{{ grupo.saldo_total | formato_contable }}</span>
+                            </div>
+                        </div>
+                        {% else %}
+                        <p class="text-center" style="color:#999; font-style:italic; padding:15px;">Sin deudas registradas</p>
+                        {% endfor %}
+                    </div>
+                    <div class="footer-grupo">
+                        <span>Total Pasivo</span>
+                        <span>{{ total_pasivo | formato_contable }}</span>
+                    </div>
+                </div>
+
+                <div class="bloque-grupo tema-gris">
+                    <h3 class="titulo-grupo">PATRIMONIO NETO</h3>
+                    <div class="tabla-wrapper">
+                        {% for grupo in patrimonio %}
+                        <div class="rubro-container">
+                            <div class="rubro-header">{{ grupo.rubro }}</div>
+                            <table class="rubro-table">
+                                {% for c in grupo.cuentas %}
+                                <tr>
+                                    <td>{{ c.nombre }}</td>
+                                    <td class="monto">{{ c.saldo | formato_contable }}</td>
+                                </tr>
+                                {% endfor %}
+                            </table>
+                        </div>
+                        {% endfor %}
+                        
+                        <div class="rubro-container" style="border: 2px solid #eee;">
+                            <table class="rubro-table">
+                                <tr style="background-color: #f8f9fa;">
+                                    <td style="font-style: italic; color: #2c3e50; font-weight:bold;">Resultado del Ejercicio</td>
+                                    <td class="monto" style="font-weight:bold;">{{ resultado_ejercicio | formato_contable }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="footer-grupo">
+                        <span>Total Patrimonio</span>
+                        <span>{{ (total_patrimonio + resultado_ejercicio) | formato_contable }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="barra-comprobacion">
+            <div>
+                <strong style="color: #555;">TOTAL PASIVO + PATRIMONIO:</strong>
+                <span style="font-family: 'Courier New', monospace; font-size: 1.3em; font-weight: bold; margin-left: 10px; color: #333;">
+                    {{ total_pasivo_mas_patrimonio | formato_contable }}
+                </span>
+            </div>
+
+            {% if total_activo == total_pasivo_mas_patrimonio %}
+            <div class="estado-badge estado-ok">
+                <span style="font-size: 1.2em;">✅</span> BALANCE CUADRADO
+            </div>
+            {% else %}
+            <div class="estado-badge estado-error">
+                <span style="font-size: 1.2em;">❌</span> DESCUADRADO (Dif: {{ (total_activo - total_pasivo_mas_patrimonio) | formato_contable }})
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    </div>
+{% endblock %}

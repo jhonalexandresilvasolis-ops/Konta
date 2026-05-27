@@ -1,0 +1,26 @@
+# Bases de datos
+*.db
+*.sqlite
+*.sqlite3
+datos/
+
+# Variables de entorno
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.venv/
+env/
+*.egg-info/
+dist/
+build/
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

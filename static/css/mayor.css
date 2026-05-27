@@ -1,0 +1,316 @@
+/* static/css/mayor.css */
+
+/* --- LAYOUT PRINCIPAL --- */
+.mayor-container {
+    display: flex;
+    min-height: 80vh;
+    gap: 20px;
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+/* --- BARRA LATERAL (SIDEBAR) --- */
+.sidebar-cuentas {
+    width: 250px;
+    background-color: #2c3e50;
+    color: #ecf0f1;
+    padding: 15px 0;
+    overflow-y: auto;
+    flex-shrink: 0;
+}
+
+.grupo-titulo {
+    padding: 10px 15px;
+    background-color: #1a252f;
+    color: #95a5a6;
+    font-size: 0.85em;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: bold;
+    margin-top: 10px;
+}
+.grupo-titulo:first-child { margin-top: 0; }
+
+.sidebar-cuentas a {
+    display: block;
+    padding: 10px 20px;
+    color: #bdc3c7;
+    text-decoration: none;
+    transition: all 0.2s;
+    border-left: 4px solid transparent;
+    font-size: 0.95em;
+}
+
+.sidebar-cuentas a:hover {
+    background-color: #34495e;
+    color: white;
+    border-left-color: #3498db;
+}
+
+.sidebar-cuentas a.active {
+    background-color: #ecf0f1;
+    color: #2c3e50;
+    font-weight: bold;
+    border-left-color: #e74c3c;
+}
+
+/* --- ÁREA PRINCIPAL --- */
+.area-contenido {
+    flex-grow: 1;
+    padding: 30px;
+    background-color: white;
+}
+
+/* ENCABEZADO DE CUENTA */
+.encabezado-cuenta {
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    border-bottom: 2px solid #2c3e50; 
+    padding-bottom: 15px; 
+    margin-bottom: 25px;
+}
+
+.encabezado-cuenta h2 { margin: 0; color: #2c3e50; }
+.badge-codigo { 
+    background: #eee; color: #555; 
+    padding: 5px 10px; border-radius: 4px; font-weight: bold; font-family: monospace; 
+}
+
+/* --- BOTONES SWITCHER DE VISTAS (ESTO FALTABA) --- */
+.switch-vistas {
+    display: flex; 
+    gap: 5px; 
+    background: #eee; 
+    padding: 4px; 
+    border-radius: 6px;
+}
+
+.btn-vista {
+    text-decoration: none; 
+    padding: 6px 15px; 
+    font-size: 0.9em; 
+    color: #777;
+    border-radius: 4px; 
+    font-weight: bold; 
+    display: flex; 
+    align-items: center; 
+    gap: 6px;
+    transition: all 0.2s; 
+    border: 1px solid transparent;
+}
+
+.btn-vista:hover { background: #e0e0e0; color: #333; }
+
+.btn-vista.active { 
+    background: white; 
+    color: #2c3e50; 
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+    border-color: #ddd; 
+}
+
+/* --- VISTA 1: TABLA DETALLADA --- */
+.tabla-mayor {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95em;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    table-layout: auto;
+}
+
+.tabla-mayor thead tr { background-color: #2c3e50; color: white; }
+.tabla-mayor th, .tabla-mayor td { padding: 12px 10px; border-bottom: 1px solid #eee; vertical-align: middle; }
+.tabla-mayor tbody tr:hover { background-color: #f8f9fa; }
+
+/* Columnas */
+.col-fecha { width: 15%; text-align: center; color: #fffdfd; font-size: 0.9em; white-space: nowrap; }
+.col-concepto { width: 35%; text-align: center; color: #ffffff; }
+
+/* Colores de texto en filas del cuerpo (tbody) - sobreescriben el header */
+tbody .col-fecha { color: #555; }
+tbody .col-concepto { color: #333; }
+.col-monto { width: 16.6%; text-align: right; font-family: 'Courier New', monospace; font-weight: bold; }
+
+/* Colores Semánticos */
+.bg-debe { background-color: #f0fff4; color: #27ae60; }
+.bg-haber { background-color: #fff5f5; color: #c0392b; }
+.bg-saldo { background-color: #fffde7; color: #333; }
+
+/* --- REEMPLAZA LA SECCIÓN "ESQUEMA T (MODO ESCALERA)" CON ESTO --- */
+
+/* ESQUEMA T (MODO ESCALERA DINÁMICO) */
+.contenedor-t {
+    max-width: 800px;
+    margin: 0 auto;
+    background: white;
+    padding: 20px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+.cabecera-t {
+    /* El techo de la T */
+    border-bottom: 4px solid #2c3e50;
+    margin-bottom: 0;
+    display: flex;
+    background: white;
+    position: relative;
+    z-index: 2;
+}
+
+.titulo-columna {
+    flex: 1;
+    text-align: center;
+    font-weight: bold;
+    padding-bottom: 10px;
+    font-size: 1.1em;
+}
+.titulo-columna.debe { color: #27ae60; }
+.titulo-columna.haber { color: #c0392b; }
+
+/* EL CUERPO: Aquí está el truca de la línea vertical */
+.cuerpo-t {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    min-height: 100px; /* Altura mínima decente, pero no excesiva */
+    
+    /* TRUCO MAESTRO: Dibujamos la línea central como fondo */
+    /* Esto asegura que la línea siempre conecte el techo con el piso */
+    background: linear-gradient(
+        to right, 
+        transparent 49.8%, 
+        #2c3e50 49.8%, 
+        #2c3e50 50.2%, 
+        transparent 50.2%
+    );
+}
+
+/* FILAS DE MOVIMIENTOS */
+.fila-t {
+    display: flex;
+    width: 100%;
+    /* Quitamos el border-bottom dashed para un look más limpio, o lo dejamos muy sutil */
+    border-bottom: 1px dashed rgba(0,0,0,0.05);
+}
+.fila-t:hover { background-color: rgba(0,0,0,0.02); }
+
+/* CELDAS */
+.celda-t {
+    flex: 1;
+    padding: 8px 15px; /* Un poco más de aire */
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    color: #333;
+    display: flex;
+    justify-content: space-between; 
+    align-items: center;
+}
+
+/* YA NO usamos border-right aquí, porque la línea la hace el fondo del cuerpo */
+.celda-t.izq {
+    text-align: right; 
+    color: #27ae60;
+    padding-right: 20px; /* Separación de la línea central */
+}
+
+.celda-t.der {
+    text-align: right; 
+    color: #c0392b;
+    padding-left: 20px; /* Separación de la línea central */
+}
+
+.ref-asiento {
+    font-family: sans-serif;
+    font-size: 0.7em;
+    color: #aaa;
+    font-weight: normal;
+}
+
+/* TOTALES (El Piso) */
+.fila-total {
+    display: flex;
+    /* Esta línea 'cierra' la T visualmente */
+    border-top: 4px solid #2c3e50; 
+    padding-top: 15px;
+    font-size: 1.1em;
+    font-weight: bold;
+    background: white; /* Importante: Fondo blanco para "limpiar" si el gradiente sobresale */
+    position: relative;
+    z-index: 2;
+}
+
+.total-box {
+    flex: 1;
+    text-align: right;
+    padding: 0 15px;
+    font-family: 'Courier New', monospace;
+}
+.total-box.izq { color: #27ae60; padding-right: 20px; }
+.total-box.der { color: #c0392b; }
+
+/* SALDO FINAL */
+.saldo-final-box {
+    margin-top: 25px;
+    text-align: center;
+    padding: 15px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 1.2em;
+    border: 2px solid;
+    width: fit-content; /* Que la caja se ajuste al contenido */
+    margin-left: auto;
+    margin-right: auto;
+    min-width: 50%;
+}
+.saldo-deudor { background: #e8f5e9; border-color: #27ae60; color: #27ae60; }
+.saldo-acreedor { background: #fffde7; border-color: #f1c40f; color: #d35400; }
+
+/* Estilo para el importe original (Moneda extranjera) */
+.monto-secundario {
+    display: block;          /* Fuerza un salto de línea */
+    font-size: 0.8em;        /* Letra más pequeña */
+    color: #7f8c8d;          /* Gris acorde al tema */
+    font-style: italic;
+    font-weight: normal;     /* Quitamos negrita */
+    margin-top: 2px;
+    line-height: 1.2;
+}
+
+/* Ajuste específico para el esquema T: 
+   Asegura que el texto se alinee correctamente junto a la línea central */
+.celda-t.izq .monto-secundario {
+    text-align: right;
+}
+
+.celda-t.der .monto-secundario {
+    text-align: left;
+}
+/* --- BUSCADOR DEL SIDEBAR --- */
+.search-container-sidebar {
+    padding: 0 15px 15px 15px;
+}
+
+.search-box-sidebar {
+    width: 100%;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 4px;
+    background-color: #1a252f;
+    color: #ecf0f1;
+    font-size: 0.9em;
+    outline: none;
+    transition: box-shadow 0.2s;
+}
+
+.search-box-sidebar::placeholder {
+    color: #7f8c8d;
+}
+
+.search-box-sidebar:focus {
+    box-shadow: 0 0 0 2px #3498db;
+    background-color: #0d1318;
+}

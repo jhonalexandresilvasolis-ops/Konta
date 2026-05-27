@@ -1,0 +1,298 @@
+/* static/css/lobby.css */
+
+/* --- CONFIGURACIÓN BASE --- */
+body {
+    margin: 0; 
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: linear-gradient(135deg, #1a252f 0%, #2c3e50 100%);
+    height: 100vh; 
+    /* CAMBIO CLAVE: Columna para apilar Barra Usuario + Contenido */
+    display: flex; 
+    flex-direction: column; 
+    color: white; 
+    overflow: hidden;
+}
+
+/* --- BARRA DE USUARIO FLOTANTE (Top Right) --- */
+/* CAMBIAMOS ESTA CLASE COMPLETAMENTE */
+.user-bar-floating {
+    /* Ya no es absolute, ahora es static (parte del flujo) */
+    position: relative; 
+    width: 100%;
+    padding: 20px 30px; /* Espacio interno */
+    display: flex;
+    justify-content: flex-end; /* Alinear a la derecha */
+    align-items: center;
+    gap: 10px;
+    z-index: 100;
+    /* Opcional: un fondo suave si quieres diferenciarla */
+    /* background: rgba(0,0,0,0.2); */
+}
+
+.user-label {
+    color: rgba(255,255,255,0.7); 
+    font-size: 0.95em;
+}
+
+.btn-logout-lobby {
+    background: rgba(231, 76, 60, 0.8); 
+    color: white; 
+    text-decoration: none; 
+    padding: 8px 15px; 
+    border-radius: 5px; 
+    font-weight: bold; 
+    font-size: 0.9em;
+    transition: 0.3s;
+}
+
+.btn-logout-lobby:hover {
+    background: rgba(231, 76, 60, 1);
+    transform: translateY(-2px);
+}
+
+/* --- SPLASH SCREEN --- */
+#splash-screen {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: #1a252f; z-index: 9999;
+    display: flex; align-items: center; justify-content: center;
+    transition: opacity 0.5s ease;
+}
+.splash-content { text-align: center; }
+.logo-splash { font-size: 3em; font-weight: 800; letter-spacing: 2px; margin-bottom: 20px; }
+.loader-line {
+    width: 200px; height: 4px; background: #34495e; margin: 0 auto 15px;
+    position: relative; overflow: hidden; border-radius: 2px;
+}
+.loader-line::after {
+    content: ''; position: absolute; top: 0; left: 0; width: 50%; height: 100%;
+    background: #3498db; animation: loading 1s infinite ease-in-out;
+}
+@keyframes loading { 0% { left: -50%; } 100% { left: 100%; } }
+
+/* --- CONTENEDOR PRINCIPAL --- */
+.lobby-container {
+    display: flex; gap: 50px; width: 900px; max-width: 95%;
+    align-items: center;
+    /* CAMBIO CLAVE: Esto lo centra verticalmente en el espacio restante */
+    margin: auto; 
+}
+
+.brand-area { flex: 1; }
+.brand-area h1 { font-size: 3.5em; margin: 0; line-height: 1; text-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+.brand-area p { font-size: 1.2em; color: #bdc3c7; margin-top: 10px; }
+.version-tag {
+    display: inline-block; background: rgba(255,255,255,0.1); padding: 5px 10px;
+    border-radius: 20px; font-size: 0.8em; margin-top: 20px; border: 1px solid rgba(255,255,255,0.2);
+}
+
+/* --- PANEL DE GESTIÓN --- */
+.panel-gestion {
+    flex: 1.2; background: white; color: #333;
+    border-radius: 15px; overflow: hidden;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+    display: flex; flex-direction: column;
+}
+
+/* LISTA DE EMPRESAS */
+.lista-empresas { 
+    /* 1. Subimos todo: Padding superior bajado de 50px a 20px */
+    padding: 20px 30px 10px 30px; 
+    
+    background: #f8f9fa; 
+    flex-grow: 1; 
+    
+    /* 2. Compactamos: Altura mínima bajada de 300px a 150px */
+    /* Esto evita que empuje la sección de importar fuera de la pantalla */
+    min-height: 150px; 
+    
+    display: flex;        /* Nuevo: Para manejar mejor el contenido interno */
+    flex-direction: column;
+}
+
+/* Título de la lista */
+.lista-empresas h3 { 
+    margin-top: 0; 
+    color: #2c3e50; 
+    border-bottom: 2px solid #e0e0e0; 
+    padding-bottom: 10px;
+    margin-bottom: 0; /* Quitamos margen extra abajo */
+}
+
+/* Busca .scroll-area y REEMPLÁZALO por esto: */
+.scroll-area { 
+    /* Altura fija: Muestra aprox 3 empresas. Si hay más, aparece scroll interno. */
+    height: 220px; 
+    
+    overflow-y: auto; 
+    margin-top: 15px;
+    padding-right: 5px; /* Espacio para que la barra de scroll no tape texto */
+    
+    /* Estética del scrollbar (Opcional, para Webkit/Chrome) */
+    scrollbar-width: thin;
+    scrollbar-color: #bdc3c7 #f1f1f1;
+}
+
+.empresa-card {
+    background: white; padding: 15px; border-radius: 8px; margin-bottom: 10px;
+    border: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;
+    transition: transform 0.2s, box-shadow 0.2s; cursor: pointer;
+}
+.empresa-card:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.05); border-color: #3498db; }
+
+.empresa-info { flex-grow: 1; display: flex; align-items: center; gap: 10px; }
+.icono-empresa { font-size: 1.5em; }
+.nombre-empresa { font-weight: bold; color: #2c3e50; }
+
+/* BOTONES DE ACCIÓN (Iconos) */
+.btn-icon { text-decoration: none; font-size: 1.2em; opacity: 0.6; transition: 0.2s; margin-right: 5px; }
+.btn-icon:hover { opacity: 1; transform: scale(1.1); }
+
+.btn-borrar-icon {
+    background: none; border: none; cursor: pointer;
+    font-size: 1.2em; opacity: 0.4; transition: 0.2s;
+}
+.btn-borrar-icon:hover { opacity: 1; transform: scale(1.1); color: #c0392b; }
+
+/* ÁREA DE CREAR EMPRESA */
+.crear-area { padding: 30px; background: white; border-top: 1px solid #eee; }
+.crear-area h3 { margin-top: 0; font-size: 1em; color: #7f8c8d; }
+.crear-area form { display: flex; gap: 10px; }
+.crear-area input {
+    flex: 1; padding: 10px; border: 2px solid #eee; border-radius: 6px; font-size: 1em;
+}
+.crear-area input:focus { border-color: #3498db; outline: none; }
+.crear-area button {
+    background: #2c3e50; color: white; border: none; padding: 10px 20px;
+    border-radius: 6px; font-weight: bold; cursor: pointer;
+}
+.crear-area button:hover { background: #34495e; }
+
+/* ÁREA DE IMPORTAR */
+.importar-area {
+    margin-top: auto; /* Empuja el área al fondo si sobra espacio */
+    padding: 25px 30px; /* Más espacio interno */
+    background: #fff;
+    border-top: 1px solid #eee; /* Línea sutil en vez de dashed */
+}
+
+.importar-area h3 {
+    margin-top: 0;
+    margin-bottom: 15px; /* Espacio debajo del título */
+    font-size: 1em;
+    color: #7f8c8d;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 0.85em;
+    font-weight: bold;
+}
+
+.importar-form {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Reducimos un poco el espacio (antes 15px) */
+    padding: 10px 0;
+    width: 100%; /* Asegura que use el ancho del padre */
+    box-sizing: border-box; /* Evita problemas de cálculo de bordes */
+}
+
+/* Estilo para el input de archivo */
+.importar-form input[type="file"] {
+    flex: 1;
+    padding: 8px;
+    background: #fdfdfd;
+    border: 2px solid #e0e0e0; /* Borde suave */
+    border-radius: 6px;
+    font-size: 0.9em;
+    color: #555;
+    cursor: pointer;
+    transition: border-color 0.3s;
+}
+
+.importar-form input[type="file"]:hover {
+    border-color: #3498db; /* Azul al pasar el mouse */
+}
+
+/* Botón Subir mejorado */
+.btn-secondary {
+    background: #34495e; /* Azul oscuro elegante */
+    color: white; 
+    border: none; 
+    padding: 10px 25px; /* Botón más ancho */
+    border-radius: 6px; 
+    font-weight: bold; 
+    cursor: pointer;
+    transition: all 0.2s;
+    height: 42px; /* Altura fija para igualar al input */
+    white-space: nowrap; /* Evita que el texto se parta */
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.btn-secondary:hover { 
+    background: #2c3e50; 
+    transform: translateY(-2px); /* Efecto de elevación */
+    box-shadow: 0 6px 8px rgba(0,0,0,0.15);
+}
+/* ALERTAS Y MENSAJES */
+.alert { padding: 10px; border-radius: 4px; margin-bottom: 15px; font-size: 0.9em; }
+.alert.error { background: #f8d7da; color: #721c24; }
+.alert.success { background: #d4edda; color: #155724; }
+.no-data { text-align: center; color: #999; margin-top: 50px; font-style: italic; }
+/* --- PERSONALIZACIÓN DE SCROLLBAR (Chrome/Edge) --- */
+
+/* El riel (fondo) de la barra */
+.scroll-area::-webkit-scrollbar {
+    width: 8px; /* Más fina */
+}
+
+.scroll-area::-webkit-scrollbar-track {
+    background: #f1f1f1; 
+    border-radius: 4px;
+}
+
+/* La barra que se mueve (Thumb) */
+.scroll-area::-webkit-scrollbar-thumb {
+    background: #bdc3c7; /* Gris suave */
+    border-radius: 4px;
+}
+
+.scroll-area::-webkit-scrollbar-thumb:hover {
+    background: #3498db; /* Azul al pasar el mouse */
+}
+/* --- FORMULARIO DE IMPORTAR (Estilo y Separación) --- */
+.importar-form {
+    display: flex;
+    align-items: center;
+    gap: 15px; /* LA SOLUCIÓN: Separa el input del botón Subir */
+    padding: 10px 0;
+}
+
+/* --- TRUCO MAGICO PARA EL INPUT DE ARCHIVO --- */
+input[type="file"] {
+    font-size: 0.9em;
+    color: #555;
+    background: white;
+    padding: 5px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    
+    /* ESTOS DOS SON LA CLAVE DEL ARREGLO: */
+    flex-grow: 1;  /* Ocupa el espacio disponible */
+    min-width: 0;  /* PERMITE ENCOGERSE: Evita que empuje al botón fuera */
+}
+
+/* Esto estiliza el botón gris interno que dice "Seleccionar archivo" */
+input[type="file"]::file-selector-button {
+    background-color: #ecf0f1;
+    color: #2c3e50;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-right: 15px; /* Espacio entre el botón gris y el nombre del archivo */
+    transition: background 0.3s;
+}
+
+input[type="file"]::file-selector-button:hover {
+    background-color: #bdc3c7;
+}

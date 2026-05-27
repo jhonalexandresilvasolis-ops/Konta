@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Konta - Acceso</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/lobby.css') }}">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📊</text></svg>">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+
+    <div class="user-bar-floating">
+        <span class="user-label">
+            👤 {{ current_user.username }}
+        </span>
+        <a href="{{ url_for('logout') }}" class="btn-logout-lobby">
+            Cerrar Sesión 🚪
+        </a>
+    </div>
+
+    <div id="splash-screen">
+        <div class="splash-content">
+            <h1 class="logo-splash">Konta</h1>
+            <div class="loader-line"></div>
+            <p>Cargando Entorno Empresarial...</p>
+        </div>
+    </div>
+
+    <div class="lobby-container">
+
+        <div class="brand-area">
+            <h1>Konta</h1>
+            <p>Sistema de Gestión Multi-Empresa</p>
+            <div class="version-tag">v2.1 Enterprise</div>
+        </div>
+
+        <div class="panel-gestion">
+
+            <div class="lista-empresas">
+                <h3>📂 Mis Empresas</h3>
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert {{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <div class="scroll-area">
+                    {% for emp in empresas %}
+                    <div class="empresa-card">
+                        <div class="empresa-info" onclick="window.location.href='/seleccionar_empresa/{{ emp.archivo }}'">
+                            <span class="icono-empresa">🏢</span>
+                            
+                            <div style="display: flex; flex-direction: column;">
+                                <span class="nombre-empresa">{{ emp.nombre }}</span>
+                                
+                                {% if not emp.es_mio %}
+                                    <span style="font-size: 0.75em; color: #e67e22; font-weight: bold;">
+                                        👤 Alumno: {{ emp.owner }}
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="acciones">
+                            <a href="/exportar_empresa/{{ emp.archivo }}" class="btn-icon" title="Exportar / Entregar a Profesor">
+                                📤
+                            </a>
+                            <button onclick="confirmarBorrado('{{ emp.archivo }}', '{{ emp.nombre }}')" class="btn-borrar-icon" title="Eliminar Empresa">
+                                🗑️
+                            </button>
+                        </div>
+                    </div>
+                    {% else %}
+                        <p class="no-data">No hay empresas creadas. Crea una nueva abajo.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="crear-area">
+                <h3>✨ Nueva Empresa</h3>
+                <form action="/crear_empresa" method="POST">
+                    <input type="text" name="nombre_empresa" placeholder="Ej: Empresa S.A. o Ejercicio 1" required autocomplete="off">
+                    <button type="submit">Crear Entorno</button>
+                </form>
+            </div>
+
+            <div class="importar-area">
+                <h3>📥 Importar Empresa (Corrección)</h3>
+                <form action="/importar_empresa" method="POST" enctype="multipart/form-data" class="importar-form">
+                    <input type="file" name="archivo_db" accept=".db" required>
+                    <button type="submit" class="btn-secondary">Subir</button>
+                </form>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Animación de carga inicial
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const splash = document.getElementById('splash-screen');
+                splash.style.opacity = '0';
+                setTimeout(() => splash.style.display = 'none', 500);
+            }, 1000);
+        });
+
+        // ALERTA DE BORRADO (SweetAlert2)
+        function confirmarBorrado(archivo, nombre) {
+            Swal.fire({
+                title: '¿Eliminar ' + nombre + '?',
+                text: "Esta acción borrará toda la contabilidad de esta empresa. No se puede deshacer.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar',
+                background: '#fff',
+                color: '#333'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = '/borrar_empresa/' + archivo;
+                }
+            })
+        }
+    </script>
+</body>
+</html>

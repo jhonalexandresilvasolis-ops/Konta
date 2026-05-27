@@ -1,0 +1,270 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1 class="text-center" style="margin-bottom: 30px;">👥 Cuentas Corrientes</h1>
+
+<div style="max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: 1fr 2fr; gap: 20px;">
+
+    <div
+        style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); height: fit-content;">
+        <h3 style="margin-top: 0; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px;">➕ Nueva
+            Entidad</h3>
+        <form action="/cuentas_corrientes" method="POST" style="display: flex; flex-direction: column; gap: 15px;">
+
+            <div>
+                <label style="font-weight: bold; font-size: 0.9em; color: #555;">Tipo de Entidad:</label>
+                <select name="tipo" required
+                    style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                    <option value="CLIENTE">👤 Cliente (Nos debe)</option>
+                    <option value="PROVEEDOR">🏢 Proveedor (Le debemos)</option>
+                </select>
+            </div>
+
+            <div>
+                <label style="font-weight: bold; font-size: 0.9em; color: #555;">Nombre / Razón Social:</label>
+                <input type="text" name="nombre" required
+                    style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;"
+                    placeholder="Ej: Juan Pérez / UTE">
+            </div>
+
+            <div>
+                <label style="font-weight: bold; font-size: 0.9em; color: #555;">RUT / CI (Opcional):</label>
+                <input type="text" name="rut"
+                    style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+            </div>
+
+            <div>
+                <label style="font-weight: bold; font-size: 0.9em; color: #555;">Teléfono (Opcional):</label>
+                <input type="text" name="telefono"
+                    style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+            </div>
+
+            <button type="submit"
+                style="background: #27ae60; color: white; border: none; padding: 10px; border-radius: 4px; font-weight: bold; cursor: pointer;">Guardar
+                Entidad</button>
+        </form>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 20px;">
+
+        <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+            <h3 style="margin-top: 0; color: #27ae60;">👥 Nuestros Clientes</h3>
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.95em;">
+                <tr style="background: #f8f9fa; border-bottom: 2px solid #ddd;">
+                    <th style="padding: 10px; text-align: left;">Nombre</th>
+                    <th style="padding: 10px; text-align: right;">Saldo</th>
+                    <th style="padding: 10px; text-align: center;">Acción</th>
+                </tr>
+                {% for e in entidades if e.tipo == 'CLIENTE' %}
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 10px;"><strong>{{ e.nombre }}</strong></td>
+                    <td style="padding: 10px; text-align: right; font-weight: bold;">
+                        {% set saldo = e.saldo_total %}
+                        {% if saldo < 0 %} <span style="color: #c0392b;" title="Anticipo / Nos pagó de más">( $ {{
+                            (saldo * -1) | formato_contable }} )</span>
+                            {% elif saldo == 0 %}
+                            <span style="color: #7f8c8d;">$ 0.00</span>
+                            {% else %}
+                            <span style="color: #27ae60;" title="Nos debe dinero">$ {{ saldo | formato_contable
+                                }}</span>
+                            {% endif %}
+                    </td>
+                    <td style="padding: 10px; text-align: center;">
+                        <button onclick="abrirModalPago({{ e.id }}, 'CLIENTE', '{{ e.nombre }}', {{ e.saldo_total }})"
+                            style="background: #3498db; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">
+                            💰 Cobrar
+                        </button>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="3" style="text-align: center; padding: 15px; color: #888;">No hay clientes registrados.
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+
+        <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+            <h3 style="margin-top: 0; color: #c0392b;">🏢 Nuestros Proveedores</h3>
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.95em;">
+                <tr style="background: #f8f9fa; border-bottom: 2px solid #ddd;">
+                    <th style="padding: 10px; text-align: left;">Nombre</th>
+                    <th style="padding: 10px; text-align: right;">Saldo</th>
+                    <th style="padding: 10px; text-align: center;">Acción</th>
+                </tr>
+                {% for e in entidades if e.tipo == 'PROVEEDOR' %}
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 10px;"><strong>{{ e.nombre }}</strong></td>
+                    <td style="padding: 10px; text-align: right; font-weight: bold;">
+                        {% set saldo = e.saldo_total %}
+                        {% if saldo < 0 %} <span style="color: #27ae60;" title="Anticipo / Le pagamos de más">( $ {{
+                            (saldo * -1) | formato_contable }} )</span>
+                            {% elif saldo == 0 %}
+                            <span style="color: #7f8c8d;">$ 0.00</span>
+                            {% else %}
+                            <span style="color: #c0392b;" title="Le debemos dinero">$ {{ saldo | formato_contable
+                                }}</span>
+                            {% endif %}
+                    </td>
+                    <td style="padding: 10px; text-align: center;">
+                        <button onclick="abrirModalPago({{ e.id }}, 'PROVEEDOR', '{{ e.nombre }}', {{ e.saldo_total }})"
+                            style="background: #e67e22; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">
+                            💸 Pagar
+                        </button>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="3" style="text-align: center; padding: 15px; color: #888;">No hay proveedores
+                        registrados.</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+
+    </div>
+</div>
+<div id="modal-pago"
+    style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center;">
+    <div
+        style="background: white; width: 450px; border-radius: 8px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+        <div id="modal-pago-header"
+            style="background: #3498db; color: white; padding: 15px; font-weight: bold; font-size: 1.2em;">
+            Liquidación de Deuda
+        </div>
+
+        <form action="/liquidar_deuda" method="POST" style="padding: 20px;">
+            <input type="hidden" name="id_entidad" id="pago-id-entidad">
+            <input type="hidden" name="tipo_entidad" id="pago-tipo-entidad">
+
+            <p style="margin-top: 0; color: #555;">Operando con: <strong id="pago-nombre-entidad"
+                    style="color: black;"></strong></p>
+            <p style="font-size: 1.1em;">Deuda Total: <strong id="pago-deuda-total"></strong></p>
+
+            <hr style="border: 0; border-top: 1px solid #eee; margin: 15px 0;">
+            <div
+                style="margin-bottom: 15px; background: #f8f9fa; padding: 10px; border-radius: 6px; border: 1px solid #eee;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <label style="font-weight: bold; font-size: 0.9em; color: #555; margin: 0;">📅 Fecha del
+                        Comprobante</label>
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                        <input type="checkbox" id="check-fecha-auto" checked onchange="toggleFechaAuto()"
+                            style="cursor: pointer;">
+                        <label for="check-fecha-auto"
+                            style="font-size: 0.85em; cursor: pointer; color: #666; margin: 0; user-select: none;">Día
+                            de hoy automático</label>
+                    </div>
+                </div>
+                <input type="date" name="fecha_pago" id="pago-fecha" required
+                    style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ccc; background: #e9ecef; pointer-events: none;">
+            </div>
+
+            <label style="font-weight: bold; font-size: 0.9em; color: #555;">💰 ¿Cuánto se va a abonar?</label>
+            <div style="display: flex; gap: 5px; margin-bottom: 10px;">
+                <button type="button" onclick="setPorcentaje(1)"
+                    style="flex: 1; padding: 5px; cursor: pointer;">100%</button>
+                <button type="button" onclick="setPorcentaje(0.5)"
+                    style="flex: 1; padding: 5px; cursor: pointer;">50%</button>
+                <button type="button" onclick="setPorcentaje(0.25)"
+                    style="flex: 1; padding: 5px; cursor: pointer;">25%</button>
+            </div>
+            <input type="number" step="0.01" name="monto_pago" id="pago-monto" required
+                style="width: 100%; padding: 10px; font-size: 1.2em; border: 2px solid #ccc; border-radius: 4px; margin-bottom: 15px;"
+                placeholder="$ 0.00">
+
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <div style="flex: 1;">
+                    <label style="font-size: 0.85em; font-weight: bold; color: #777;">Cuenta origen/destino
+                        (Dinero)</label>
+                    <select name="cuenta_dinero" required
+                        style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ccc;">
+                        <option value="">-- Dinero --</option>
+                        {% for c in cuentas if 'Caja' in c.nombre or 'Banco' in c.nombre %}
+                        <option value="{{ c.id }}">{{ c.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div style="flex: 1;">
+                    <label style="font-size: 0.85em; font-weight: bold; color: #777;">Cuenta a saldar (Deuda)</label>
+                    <select name="cuenta_deuda" required
+                        style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ccc;">
+                        <option value="">-- Deuda --</option>
+                        {% for c in cuentas if 'Deudor' in c.nombre or 'Proveedor' in c.nombre or 'Acreedor' in c.nombre
+                        %}
+                        <option value="{{ c.id }}">{{ c.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                <button type="button" onclick="document.getElementById('modal-pago').style.display='none'"
+                    style="padding: 10px 15px; border: none; background: #eee; border-radius: 4px; cursor: pointer; font-weight: bold;">Cancelar</button>
+                <button type="submit"
+                    style="padding: 10px 15px; border: none; background: #27ae60; color: white; border-radius: 4px; cursor: pointer; font-weight: bold;">Registrar
+                    en Libro Diario</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    let deudaActual = 0;
+
+    function abrirModalPago(id, tipo, nombre, deuda) {
+        document.getElementById('pago-id-entidad').value = id;
+        document.getElementById('pago-tipo-entidad').value = tipo;
+        document.getElementById('pago-nombre-entidad').innerText = nombre;
+        
+        deudaActual = parseFloat(deuda) || 0;
+        
+        if (deudaActual < 0) {
+            Swal.fire('Atención', 'Esta entidad tiene un saldo a favor (Anticipo).', 'info');
+            deudaActual = Math.abs(deudaActual);
+        }
+
+        document.getElementById('pago-deuda-total').innerText = "$ " + deudaActual.toLocaleString('es-UY', {minimumFractionDigits: 2});
+        document.getElementById('pago-monto').value = deudaActual; 
+        
+        const header = document.getElementById('modal-pago-header');
+        header.style.background = tipo === 'CLIENTE' ? '#3498db' : '#e67e22';
+        header.innerText = tipo === 'CLIENTE' ? '💰 Registrar Cobro' : '💸 Registrar Pago';
+
+        // Resetear la fecha a "Hoy" cada vez que se abre el modal
+        document.getElementById('check-fecha-auto').checked = true;
+        toggleFechaAuto();
+
+        document.getElementById('modal-pago').style.display = 'flex';
+    }
+
+    function setPorcentaje(porc) {
+        const input = document.getElementById('pago-monto');
+        input.value = (deudaActual * porc).toFixed(2);
+        input.style.borderColor = '#27ae60';
+        setTimeout(() => input.style.borderColor = '#ccc', 300);
+    }
+
+    // NUEVO: Función para alternar entre Fecha Automática y Manual
+    function toggleFechaAuto() {
+        const check = document.getElementById('check-fecha-auto');
+        const inputFecha = document.getElementById('pago-fecha');
+
+        if (check.checked) {
+            // Obtener fecha local exacta y clavarla en el input
+            const hoy = new Date();
+            const fechaLocal = new Date(hoy.getTime() - (hoy.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+            inputFecha.value = fechaLocal;
+            
+            // Bloquear visualmente para que el usuario sepa que es automático
+            inputFecha.style.background = '#e9ecef';
+            inputFecha.style.pointerEvents = 'none';
+        } else {
+            // Desbloquear para que el estudiante ponga la fecha de la letra
+            inputFecha.style.background = 'white';
+            inputFecha.style.pointerEvents = 'auto';
+            inputFecha.focus();
+        }
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,256 @@
+/* static/css/style.css - VERSIÓN MAESTRA FINAL */
+
+/* =========================================
+   1. RESET Y BASE
+   ========================================= */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #ecf0f1; /* Gris muy suave */
+    color: #333;
+    line-height: 1.6;
+    padding-bottom: 50px;
+}
+
+/* =========================================
+   2. BARRA DE NAVEGACIÓN (NUEVA)
+   ========================================= */
+.navbar {
+    background-color: #2c3e50;
+    padding: 15px 20px;
+    margin-bottom: 30px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.nav-links a {
+    color: #ecf0f1;
+    text-decoration: none;
+    margin-right: 15px;
+    font-weight: 500;
+    font-size: 1.05em;
+    transition: color 0.2s;
+}
+.nav-links a:hover { color: #3498db; text-decoration: none; }
+
+.nav-divider {
+    border-left: 1px solid rgba(255,255,255,0.2); 
+    margin: 0 10px;
+}
+
+/* Enlaces especiales */
+.nav-link-admin { color: #f1c40f !important; }
+
+/* Sección Usuario (Derecha) */
+.nav-user {
+    display: flex; align-items: center; gap: 15px; color: white;
+}
+
+.god-mode-badge {
+    color: #f1c40f; 
+    text-shadow: 0 0 5px #f1c40f; 
+    font-weight: bold;
+    display: flex; align-items: center; gap: 5px;
+}
+
+.btn-logout {
+    background-color: #e74c3c;
+    color: white;
+    text-decoration: none;
+    padding: 6px 15px;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 0.9em;
+    transition: background 0.2s;
+}
+.btn-logout:hover { background-color: #c0392b; }
+
+/* =========================================
+   3. LAYOUT GENERAL
+   ========================================= */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+    min-height: 80vh;
+}
+
+h1 { text-align: center; margin-bottom: 30px; color: #2c3e50; }
+.text-right { text-align: right; }
+.text-center { text-align: center; }
+
+/* ALERTAS */
+.alert { padding: 15px; margin-bottom: 20px; border-radius: 4px; border: 1px solid transparent; }
+.alert.error { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+.alert.success { background-color: #d4edda; color: #155724; border-color: #c3e6cb; }
+.alert.warning { background-color: #fff3cd; color: #856404; border-color: #ffeeba; }
+
+/* =========================================
+   4. ESTILOS CONTABLES (DIARIO / HOJA)
+   ========================================= */
+
+/* Grid del Asiento (Renglones) */
+.fila-movimiento {
+    display: grid;
+    /* Col 1: Valor Debe | Col 2: Nombre Debe | Col 3: Nombre Haber | Col 4: Valor Haber */
+    grid-template-columns: 15% 35% 35% 15%; 
+    gap: 10px;
+    align-items: center;
+    min-height: 35px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 1.05em;
+    border-bottom: 1px dashed #eee;
+}
+
+.col-debe-val { text-align: left; font-weight: bold; color: #333; }
+.col-debe-nom { text-align: left; text-transform: uppercase; padding-left: 10px; color: #000; }
+.col-haber-nom { text-align: right; text-transform: uppercase; padding-right: 10px; font-style: italic; color: #555; }
+.col-haber-val { text-align: right; font-weight: bold; color: #333; }
+
+/* Formulario de Carga (Caja separada) */
+.formulario-caja {
+    background-color: white;
+    border: 2px dashed #bdc3c7;
+    padding: 20px 40px;
+    margin-bottom: 50px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+.input-papel {
+    border: none; border-bottom: 1px dotted #999; background: transparent;
+    font-family: 'Courier New', Courier, monospace; font-size: 1em; padding: 4px; width: 100%; outline: none;
+}
+.input-papel:focus { border-bottom: 2px solid #2980b9; background-color: rgba(41, 128, 185, 0.05); }
+
+button { cursor: pointer; border: none; border-radius: 4px; transition: 0.3s; }
+.btn-renglon { background: #e0e0e0; padding: 5px 15px; margin: 10px 0; }
+.btn-guardar { background-color: #2c3e50; color: white; padding: 10px 25px; font-weight: bold; }
+
+/* HOJA CONTABLE CONTINUA */
+.hoja-contable {
+    background: white;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    padding: 50px 40px; 
+    min-height: 800px;
+    border: 1px solid #ccc;
+    margin-bottom: 50px;
+}
+
+.bloque-asiento { margin: 0; padding: 0; }
+
+.separador-asiento {
+    display: flex; align-items: center; justify-content: center;
+    height: 40px; margin: 0; position: relative;
+}
+.linea-negra { flex-grow: 1; height: 2px; background-color: #000; }
+.circulo-numero {
+    width: 40px; height: 40px;
+    border: 2px solid #c0392b; color: #c0392b;
+    border-radius: 50%; background: white;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2em; font-weight: bold;
+    margin: 0 10px; z-index: 5;
+}
+
+.asiento-body { padding: 5px 0; }
+
+.asiento-leyenda-row {
+    display: flex; justify-content: flex-start; padding: 5px 0 0 0; 
+}
+.texto-leyenda {
+    width: 60%; border: none; 
+    font-family: 'Courier New', Courier, monospace;
+    font-style: italic; text-align: left; padding-left: 10px;
+    color: #555; position: relative; top: 5px;
+}
+
+/* =========================================
+   5. ESTILOS LIBRO MAYOR (CUENTAS T)
+   ========================================= */
+.mayor-container {
+    display: flex; gap: 30px; margin-top: 20px; align-items: flex-start;
+}
+.sidebar-cuentas {
+    width: 280px; background: white; padding: 15px;
+    border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    max-height: 80vh; overflow-y: auto;
+}
+.grupo-titulo {
+    font-size: 0.85em; text-transform: uppercase; color: #999;
+    margin-top: 15px; margin-bottom: 5px; padding-left: 10px;
+    font-weight: bold; border-bottom: 1px solid #eee;
+}
+.sidebar-cuentas a {
+    display: block; padding: 6px 12px; color: #444;
+    text-decoration: none; border-left: 3px solid transparent;
+    font-size: 0.95em;
+}
+.sidebar-cuentas a:hover { background-color: #f4f6f8; color: #2c3e50; border-left-color: #ccc; }
+.sidebar-cuentas a.active {
+    background-color: #e8f0fe; color: #1a73e8;
+    border-left-color: #1a73e8; font-weight: bold;
+}
+
+.area-t {
+    flex-grow: 1; background: white; padding: 40px;
+    border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center;
+}
+.esquema-t { width: 100%; max-width: 700px; margin: 0 auto; }
+.t-titulo { font-size: 1.8em; font-weight: bold; color: #2c3e50; padding-bottom: 10px; margin-bottom: 0; }
+.t-header-line { border-top: 4px solid #333; width: 100%; margin-bottom: 0; }
+.tabla-t { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.tabla-t td {
+    padding: 8px; font-family: 'Courier New', Courier, monospace;
+    font-size: 1.1em; vertical-align: middle; height: 35px;
+}
+.col-debe { text-align: center; border-right: 4px solid #333; color: #333; }
+.col-haber { text-align: center; color: #333; }
+.t-row-total td {
+    border-top: 2px solid #333; font-weight: bold;
+    background-color: #fafafa; padding-top: 15px;
+}
+.t-saldo-final {
+    margin-top: 30px; padding: 15px; font-size: 1.3em;
+    border-radius: 8px; color: white; font-weight: bold;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+.bg-deudor { background-color: #27ae60; }
+.bg-acreedor { background-color: #c0392b; }
+
+/* =========================================
+   6. GESTIÓN DE USUARIOS (¡LO QUE FALTABA!)
+   ========================================= */
+.users-wrapper { max-width: 900px; margin: 0 auto; }
+
+.card-user-form { 
+    background: white; 
+    padding: 30px; 
+    border-radius: 8px; 
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
+}
+
+/* Insignias de Roles */
+.badge-admin { 
+    background-color: #f1c40f; color: #2c3e50; 
+    padding: 4px 8px; border-radius: 4px; 
+    font-weight: bold; font-size: 0.85em; 
+}
+.badge-dev { 
+    background-color: #2c3e50; color: #f1c40f; 
+    padding: 4px 8px; border-radius: 4px; 
+    font-weight: bold; font-size: 0.85em; 
+    border: 1px solid #f1c40f; 
+}
+.badge-user { 
+    background-color: #3498db; color: white; 
+    padding: 4px 8px; border-radius: 4px; 
+    font-size: 0.85em; 
+}
+.badge-group { 
+    background-color: #95a5a6; color: white; 
+    padding: 2px 6px; border-radius: 4px; 
+    font-size: 0.8em; 
+}

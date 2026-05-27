@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/cuentas.css') }}">
+<div class="cuentas-container" style="max-width: 1000px;">
+
+    <div class="header-seccion">
+        <div>
+            <h1>Inventario</h1>
+            <p>Gestión de Artículos y Stock</p>
+        </div>
+        <div style="text-align: right;">
+            <div style="font-size: 0.8em; color: #7f8c8d;">VALORIZACIÓN TOTAL</div>
+            <div style="font-size: 1.5em; font-weight: bold; color: #2c3e50;">{{ valor_total | formato_contable }}</div>
+        </div>
+    </div>
+
+    <div style="margin-bottom: 20px;">
+        <button class="btn-nueva" onclick="abrirModalProducto()">📦 Nuevo Producto</button>
+    </div>
+
+    <div class="tabla-card">
+        <table class="tabla-cuentas">
+            <thead>
+                <tr>
+                    <th>Código (SKU)</th>
+                    <th>Producto</th>
+                    <th class="text-right">Stock</th>
+                    <th class="text-right">Costo Prom. (PPP)</th>
+                    <th class="text-right">Precio Venta</th>
+                    <th class="text-right">Valor Total</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in productos %}
+                <tr>
+                    <td><span class="badge-codigo">{{ p.codigo }}</span></td>
+                    <td style="font-weight: bold;">{{ p.nombre }}</td>
+
+                    <td class="text-right">
+                        <span class="badge-tipo {{ 'ganancia' if p.stock_actual > 0 else 'pérdida' }}">
+                            {{ p.stock_actual }} u.
+                        </span>
+                    </td>
+
+                    <td class="text-right" style="color: #7f8c8d;">{{ p.costo_promedio | formato_contable }}</td>
+                    <td class="text-right" style="color: #27ae60; font-weight: bold;">{{ p.precio_venta |
+                        formato_contable }}</td>
+                    <td class="text-right" style="font-family: monospace;">
+                        {{ (p.stock_actual * p.costo_promedio) | formato_contable }}
+                    </td>
+
+                    <td class="acciones">
+                        <button
+                            onclick="editarProducto('{{ p.id }}', '{{ p.codigo }}', '{{ p.nombre }}', '{{ p.precio_venta }}')"
+                            class="btn-icon editar">✏️</button>
+                        <a href="/kardex/{{ p.id }}" class="btn-icon" title="Ver Ficha de Stock (Kardex)"
+                            style="text-decoration: none;">
+                            📜
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="vacio">No hay productos en el inventario.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="modalProducto" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modalTitulo">Nuevo Producto</h2>
+            <span class="close-btn" onclick="cerrarModal()">&times;</span>
+        </div>
+
+        <form action="/guardar_producto" method="POST">
+            <input type="hidden" id="inputId" name="id_producto">
+
+            <div class="form-group">
+                <label>Código / SKU</label>
+                <input type="text" id="inputCodigo" name="codigo" placeholder="Ej: PROD-001" required
+                    autocomplete="off">
+            </div>
+
+            <div class="form-group">
+                <label>Nombre del Producto</label>
+                <input type="text" id="inputNombre" name="nombre" placeholder="Ej: Coca Cola 1.5L" required
+                    autocomplete="off">
+            </div>
+
+            <div class="form-group">
+                <label>Precio de Venta Sugerido ($)</label>
+                <input type="number" step="0.01" id="inputPrecio" name="precio_venta" placeholder="0.00">
+                <small>El Costo se calculará automáticamente con las compras.</small>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-cancelar" onclick="cerrarModal()">Cancelar</button>
+                <button type="submit" class="btn-guardar">Guardar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Reutilizamos lógica simple del modal
+    const modal = document.getElementById('modalProducto');
+    const titulo = document.getElementById('modalTitulo');
+
+    function abrirModalProducto() {
+        titulo.innerText = "Nuevo Producto";
+        document.getElementById('inputId').value = "";
+        document.getElementById('inputCodigo').value = "";
+        document.getElementById('inputNombre').value = "";
+        document.getElementById('inputPrecio').value = "";
+        modal.style.display = 'flex';
+    }
+
+    function editarProducto(id, cod, nom, precio) {
+        titulo.innerText = "Editar Producto";
+        document.getElementById('inputId').value = id;
+        document.getElementById('inputCodigo').value = cod;
+        document.getElementById('inputNombre').value = nom;
+        document.getElementById('inputPrecio').value = precio;
+        modal.style.display = 'flex';
+    }
+
+    function cerrarModal() { modal.style.display = 'none'; }
+    window.onclick = function (e) { if (e.target == modal) cerrarModal(); }
+</script>
+{% endblock %}
