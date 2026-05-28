@@ -1,145 +1,121 @@
-# Konta 
+# 📒 Konta — Sistema Contable Web
 
-Esta es una Aplicación demo de escritorio para contabilidad general, construida con **Python + Flask** y empaquetada como app nativa usando **pywebview**. Pensada para pequeñas y medianas empresas bajo normativa uruguaya.
+> 🚧 **Versión v0.3 Alfa — en desarrollo activo.**  
+> El proyecto está funcional pero incompleto. Se van agregando módulos y mejoras continuamente.
 
----
-
-##  Funcionalidades
-
-- **Libro Diario** — registro de asientos contables con partida doble
-- **Libro Mayor** — seguimiento por cuenta individual
-- **Cuentas Corrientes** — gestión de clientes y proveedores
-- **Libro de Inventario** — control de stock con costo promedio ponderado, fifo y lifo
-- **Balances** — Estado de Resultados y Situación Patrimonial
-- **Conciliación Bancaria** — comparación entre la registracion del bancario y registros del sistema
-- **Cierre Contable** — ciclo completo: refundición de resultados → cierre patrimonial → apertura
-- **Multi-empresa** — cada empresa tiene su propia base de datos SQLite independiente
-- **Sistema de usuarios y roles** — Alumno / Profesor (Admin) / Desarrollador
-- **Plan de cuentas base** — precargado con cuentas según normativa uruguaya
+Konta es una aplicación web de contabilidad construida con Python y Flask. El objetivo es que el usuario registre sus operaciones en el libro diario y la app genere automáticamente todos los informes financieros: libro mayor, balances y situación patrimonial.
 
 ---
 
-##  Tecnologías
+## 🖼️ Capturas
 
-| Capa | Tecnología |
-|------|-----------|
-| Backend | Python 3, Flask |
-| Frontend | HTML5, CSS3, Bootstrap 5, JavaScript |
-| Base de datos | SQLite (una por empresa + una de usuarios) |
-| Desktop | pywebview (ventana nativa) |
-| Autenticación | Flask-Login + Werkzeug |
+### Lobby — Gestión Multi-Empresa
+Cada empresa es un entorno independiente con su propia información contable.
+
+![Lobby](docs/screenshots/01-lobby.png)
 
 ---
 
-##  Instalación y ejecución
+### Dashboard — Tablero de Control
+Vista rápida de los indicadores clave: solvencia, disponibilidades, ventas y gastos del mes.
 
-### 1. Clonar el repositorio
+![Dashboard](docs/screenshots/02-dashboard.png)
+
+---
+
+### Libro Diario — Registro de Operaciones
+Ingreso de asientos contables con debe, haber y tipo de comprobante. Incluye IVA automático y plantillas reutilizables.
+
+![Libro Diario](docs/screenshots/03-libro-diario.png)
+
+---
+
+### Libro Diario — Vista Cronológica
+Visualización de los asientos registrados en formato cronológico, tal como aparecerían en un cuaderno contable.
+
+![Vista Cronológica](docs/screenshots/04-libro-diario-vista.png)
+
+---
+
+### Libro Mayor — Generado Automáticamente
+A partir de los registros del libro diario, Konta construye el libro mayor de cada cuenta con fecha, concepto, debe, haber y saldo.
+
+![Libro Mayor Completo](docs/screenshots/05-libro-mayor.png)
+
+---
+
+### Libro Mayor — Cuenta T
+Vista alternativa en formato de cuenta T, con saldo deudor o acreedor calculado automáticamente.
+
+![Cuenta T](docs/screenshots/06-cuenta-t.png)
+
+---
+
+### Situación Patrimonial — Balance Automático
+El informe más importante: Activo = Pasivo + Patrimonio Neto, generado a partir de todas las registraciones. Konta verifica que el balance cuadre.
+
+![Situación Patrimonial](docs/screenshots/07-situacion-patrimonial.png)
+
+---
+
+### Plan de Cuentas — Personalizable
+El usuario puede crear, editar y organizar sus propias cuentas contables según sus necesidades.
+
+![Plan de Cuentas](docs/screenshots/08-plan-de-cuentas.png)
+
+---
+
+## ✨ Funcionalidades actuales
+
+- 🏢 **Multi-empresa** — cada entorno es completamente independiente
+- 📝 **Libro Diario** con IVA automático, plantillas y múltiples asientos
+- 📖 **Libro Mayor** generado automáticamente (vista completa y cuenta T)
+- ⚖️ **Situación Patrimonial** con verificación de balance cuadrado
+- 📈 **Estado de Resultados** generado automáticamente
+- 📦 **Stock / Inventario** con valuación por LIFO, FIFO y PMP
+- 🏦 **Conciliación Bancaria**
+- 📊 **Dashboard** con indicadores financieros clave
+- 📋 **Plan de Cuentas** personalizable
+- 👤 **Sistema de usuarios** con sesiones independientes
+
+---
+
+## 🗺️ Lo que viene
+
+- [ ] Módulo de Proveedores
+- [ ] Dashboard mejorado con gráficas
+- [ ] Más formas de registración en el libro diario
+- [ ] Demo online
+- [ ] Correciòn de errores en el funcionamiento de ciertas funciones
+
+---
+
+## 🛠️ Stack
+
+<div align="center">
+
+<img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&amp;logo=python&amp;logoColor=white" alt="Python" />
+<img src="https://img.shields.io/badge/Flask-000000?style=for-the-badge&amp;logo=flask&amp;logoColor=white" alt="Flask" />
+<img src="https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&amp;logo=html5&amp;logoColor=white" alt="HTML5" />
+<img src="https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&amp;logo=css3&amp;logoColor=white" alt="CSS3" />
+<img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&amp;logo=javascript&amp;logoColor=black" alt="JavaScript" />
+
+</div>
+
+---
+
+## 🚀 Correr localmente
 
 ```bash
-git clone https://github.com/tu-usuario/konta.git
-cd konta
-```
-
-### 2. Crear y activar entorno virtual
-
-```bash
-# Windows
-python -m venv venv
-venv\Scripts\activate
-
-# macOS / Linux
-python3 -m venv venv
-source venv/bin/activate
-```
-
-### 3. Instalar dependencias
-
-```bash
+git clone https://github.com/jhonalexandresilvasolis-ops/Konta.git
+cd Konta
 pip install -r requirements.txt
-```
-
-### 4. Configurar variables de entorno
-
-Copiá el archivo de ejemplo y completá los valores:
-
-```bash
-cp .env.example .env
-```
-
-Editá `.env` con tus propios valores (ver sección siguiente).
-
-### 5. Ejecutar la aplicación
-
-```bash
+cp .env.example .env   # completá las variables de entorno
 python app.py
 ```
 
-Se abrirá una ventana de escritorio con la aplicación.
-
-> **Modo desarrollo (navegador):** descomentá `app.run(debug=True, port=5000)` al final de `app.py` y comentá las líneas de pywebview.
+Abrí `http://localhost:5000` en tu navegador.
 
 ---
 
-## ⚙️ Variables de entorno (`.env`)
-
-Creá un archivo `.env` en la raíz del proyecto con las siguientes variables:
-
-```env
-# Clave secreta de Flask (generala con: python -c "import secrets; print(secrets.token_hex(32))")
-SECRET_KEY=
-
-# Credenciales del usuario desarrollador
-DEV_USER=dev_master
-DEV_PASS_HASH=          # Hash generado con werkzeug.security.generate_password_hash()
-
-# Token para registro de cuentas de Profesor/Admin
-MASTER_TOKEN=
-
-# Contraseña por defecto al resetear un usuario
-RESET_DEFAULT_PASS=
-```
-
-Para generar el `DEV_PASS_HASH` en la terminal:
-
-```python
-from werkzeug.security import generate_password_hash
-print(generate_password_hash("tu_contraseña"))
-```
-
----
-
-## 📁 Estructura del proyecto
-
-```
-konta/
-├── app.py                  # Backend principal (Flask)
-├── setup_db.py             # Script para inicializar la base de datos
-├── requirements.txt
-├── .env                    # Variables de entorno (NO se sube al repo)
-├── .env.example            # Plantilla de variables de entorno
-├── .gitignore
-├── templates/              # Plantillas HTML (Jinja2)
-│   ├── base.html
-│   ├── balances.html
-│   ├── cierre.html
-│   └── ...
-├── static/
-│   ├── css/
-│   └── js/
-└── datos/                  # Bases de datos de empresas (NO se suben al repo)
-```
-
----
-
-## 👤 Roles de usuario
-
-| Rol | Descripción |
-|-----|-------------|
-| `user` | Alumno — acceso de lectura y registro de operaciones |
-| `admin` | Profesor — gestión de usuarios y grupos |
-| `dev` | Desarrollador — acceso total al sistema |
-
-El primer usuario del sistema se registra en `/setup_admin`. Para crear una cuenta de `admin` se requiere el `MASTER_TOKEN` definido en `.env`.
-
----
-
+Todavía hay mucho por hacer — pero el núcleo funciona, los balances cuadran, y cada commit lo deja un poco mejor.
